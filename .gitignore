@@ -1,0 +1,53 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Compilation errors (dart2js)
+*.js
+*.js.deps
+*.js.map
+*.js_
+*.js_symbol_map
+
+# Symbolication related
+app.*.symbols
+app.*.map.json
+
+# Android Studio/IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+.gradle/
+local.properties
+captures
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# VS Code related
+.vscode/
+
+# Flutter web related
+/web/index.html.gz
+/web/main.dart.js*
+
+# Operating System related
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets/Sensitive
+.env
+.env.prod
+.env.dev
+.env.staging
+*.jks
+*.p12
+*.keystore
+!/android/app/key.properties
