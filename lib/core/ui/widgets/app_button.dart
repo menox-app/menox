@@ -185,10 +185,16 @@ class _AppButtonState extends State<AppButton>
     final textColor = _getTextColor();
 
     if (widget.isLoading) {
-      return SizedBox(
-        height: 20,
-        width: 20,
-        child: CupertinoActivityIndicator(color: textColor, radius: 10),
+      return Center(
+        child: SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(textColor),
+            strokeCap: StrokeCap.round,
+          ),
+        ),
       );
     }
 

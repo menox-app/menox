@@ -8,17 +8,19 @@ import 'package:flutter_core/core/storage/local_storage.dart';
 import 'package:flutter_core/core/config/router.dart';
 import 'package:flutter_core/core/config/flavor_config.dart';
 
+import 'package:flutter_core/core/config/env.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 void main() async {
   final flavorConfig = FlavorConfig(
     environment: Environment.production,
-    baseUrl: 'https://pokeapi.co/api/v2',
+    baseUrl: EnvProduction.baseUrl,
     appName: 'MENOX Meme Social',
   );
   await bootstrap(flavorConfig);
 }
+
 
 Future<void> bootstrap(FlavorConfig flavorConfig) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,13 +42,14 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
   );
 }
 
-
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   final String appName;
   const MyApp({super.key, required this.appName});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
     return CupertinoApp.router(
       title: appName,
       debugShowCheckedModeBanner: false,
@@ -65,3 +68,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

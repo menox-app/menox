@@ -70,13 +70,21 @@ abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
     Response response,
     R Function(Map<String, dynamic>) mapper,
   ) {
+    final responseData = response.data;
+    final Map<String, dynamic> dataMap = responseData is Map<String, dynamic>
+        ? responseData
+        : {'data': responseData};
+
     return BaseResponse<R>(
-      data: mapper(response.data['data']),
-      status: response.data['status'] ?? 'success',
-      message: response.data['message'],
+      data: mapper(dataMap['data'] is Map<String, dynamic>
+          ? dataMap['data']
+          : (dataMap['data'] ?? {})),
+      status: dataMap['status'] ?? 'success',
+      message: dataMap['message'],
       statusCode: response.statusCode ?? 200,
     );
   }
+
 
   // Helper xử lý body trước khi gửi - Nay đã có BaseSerializable
   dynamic serialize(dynamic body) {

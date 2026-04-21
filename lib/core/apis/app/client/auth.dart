@@ -16,8 +16,14 @@ class AuthApiClient extends AppCrudApiClient<BaseRecord> {
     return mapToCustomResponse(response, SignUpResponse.fromJson);
   }
 
+  Future<BaseResponse<RefreshTokenResponse>> refreshToken(RefreshTokenBody body) async {
+    final response = await client.post("$resourcePath/refresh", data: body.toJson());
+    return mapToCustomResponse(response, RefreshTokenResponse.fromJson);
+  }
+
   @override
   BaseRecord fromJson(Map<String, dynamic> json) {
     throw UnimplementedError("AuthApiClient does not support CRUD operations");
   }
 }
+

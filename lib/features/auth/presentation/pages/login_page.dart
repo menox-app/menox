@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_core/core/apis/app/index.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
+import 'package:flutter_query/flutter_query.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
@@ -8,7 +10,11 @@ import 'package:flutter_core/core/ui/widgets/app_text_field.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
+import 'package:flutter_core/core/apis/base/interfaces/response.dart';
+import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+
 
 class LoginPage extends HookConsumerWidget {
   const LoginPage({super.key});
@@ -16,6 +22,8 @@ class LoginPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = CupertinoTheme.of(context);
+    final apiClient = ref.watch(apiClientProvider).auth;
+
     final pageController = usePageController();
     final currentStep = useState(0);
     final emailError = useState<String?>(null);
@@ -58,6 +66,33 @@ class LoginPage extends HookConsumerWidget {
         context.pop();
       }
     }
+
+    final loginMutation =
+        useMutation<BaseResponse<SignInResponse>, dynamic, SignInBody, void>(
+          (input, context) => apiClient.signIn(input),
+          onSuccess: (data, variables, onMutateResult, mutationContext) {
+            ref.read(authProvider.notifier).login(
+              data.data.token,
+              data.data.refreshToken,
+            );
+          },
+
+          onError: (error, variables, onMutateResult, mutationContext) {
+            showCupertinoDialog(
+              context: context,
+              builder: (context) => CupertinoAlertDialog(
+                title: const Text('Login Failed'),
+                content: Text(error.toString()),
+                actions: [
+                  CupertinoDialogAction(
+                    child: const Text('OK'),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -110,16 +145,25 @@ class LoginPage extends HookConsumerWidget {
               title: "What's your password?",
               continueText: "Login",
               isContinueEnabled:
-                  passwordError.value == null && passwordController.text.isNotEmpty,
+                  passwordError.value == null &&
+                  passwordController.text.isNotEmpty,
               onContinue: () {
                 validatePassword(passwordController.text);
                 if (passwordError.value == null &&
                     passwordController.text.isNotEmpty) {
-                  // Execute Login API call here
-                  // context.go('/pokemon');
+                  loginMutation.mutate(
+                    SignInBody(
+                      email: emailController.text,
+                      password: passwordController.text,
+                      provider: AuthProvider.password,
+                    ),
+                  );
+
                 }
               },
+
               theme: theme,
+              isLoading: loginMutation.isPending,
               child: Column(
                 children: [
                   AppTextField(
@@ -175,6 +219,7 @@ class _LoginStepLayout extends StatelessWidget {
   final bool showLegal;
   final CupertinoThemeData theme;
   final bool isContinueEnabled;
+  final bool isLoading;
 
   const _LoginStepLayout({
     required this.title,
@@ -184,6 +229,7 @@ class _LoginStepLayout extends StatelessWidget {
     this.showLegal = false,
     required this.theme,
     this.isContinueEnabled = true,
+    this.isLoading = false,
   });
 
   @override
@@ -252,8 +298,10 @@ class _LoginStepLayout extends StatelessWidget {
             fullWidth: true,
             size: AppButtonSize.lg,
             disabled: !isContinueEnabled,
+            isLoading: isLoading,
             onPressed: onContinue,
           ),
+
           const SizedBox(height: 10),
         ],
       ),

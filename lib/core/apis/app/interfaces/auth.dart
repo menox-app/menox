@@ -1,14 +1,35 @@
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 
+// AUTH PROVIDER ENUM
+enum AuthProvider {
+  password('password'),
+  code('code'),
+  social('social'),
+  google('google'),
+  apple('apple');
+
+  final String value;
+  const AuthProvider(this.value);
+}
+
 // LOGIN INTERFACES
 class SignInBody {
   final String email;
   final String password;
+  final AuthProvider provider;
 
-  SignInBody({required this.email, required this.password});
+  SignInBody({
+    required this.email,
+    required this.password,
+    this.provider = AuthProvider.password,
+  });
 
-  Map<String, dynamic> toJson() => {'email': email, 'password': password};
+  Map<String, dynamic> toJson() => {
+    'email': email,
+    'password': password,
+    'provider': provider.value,
+  };
 }
 
 class ISignInRequest extends BaseRequest<SignInBody> {
@@ -48,14 +69,21 @@ class SignUpBody {
   final String password;
   final String username;
   final String displayName;
-
-  SignUpBody({required this.email, required this.password, required this.username, required this.displayName});
+  final String? avatarUrl;
+  SignUpBody({
+    required this.email,
+    required this.password,
+    required this.username,
+    required this.displayName,
+    this.avatarUrl,
+  });
 
   Map<String, dynamic> toJson() => {
     'email': email,
     'password': password,
     'username': username,
     'displayName': displayName,
+    'avatarUrl': avatarUrl,
   };
 }
 
@@ -88,4 +116,27 @@ class ISignUpResponse extends BaseResponse<SignUpResponse> {
     required super.status,
     required super.statusCode,
   });
+}
+
+// REFRESH TOKEN INTERFACES
+class RefreshTokenBody {
+  final String refreshToken;
+
+  RefreshTokenBody({required this.refreshToken});
+
+  Map<String, dynamic> toJson() => {'refreshToken': refreshToken};
+}
+
+class RefreshTokenResponse {
+  final String token;
+  final String refreshToken;
+
+  RefreshTokenResponse({required this.token, required this.refreshToken});
+
+  factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) {
+    return RefreshTokenResponse(
+      token: json['access_token'],
+      refreshToken: json['refresh_token'],
+    );
+  }
 }

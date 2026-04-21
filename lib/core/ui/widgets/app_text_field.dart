@@ -38,10 +38,12 @@ class AppTextField extends StatefulWidget {
 class _AppTextFieldState extends State<AppTextField> {
   final FocusNode _focusNode = FocusNode();
   bool _isFocused = false;
+  late bool _obscureText;
 
   @override
   void initState() {
     super.initState();
+    _obscureText = widget.isPassword;
     _focusNode.addListener(() {
       setState(() {
         _isFocused = _focusNode.hasFocus;
@@ -73,7 +75,7 @@ class _AppTextFieldState extends State<AppTextField> {
             fontSize: 17,
             letterSpacing: -0.4,
           ),
-          obscureText: widget.isPassword,
+          obscureText: _obscureText,
           keyboardType: widget.keyboardType,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
@@ -86,15 +88,35 @@ class _AppTextFieldState extends State<AppTextField> {
               width: 1.5,
             ),
           ),
-          prefix: widget.prefix ??
+          prefix:
+              widget.prefix ??
               (widget.prefixIcon != null
                   ? Padding(
                       padding: const EdgeInsets.only(left: 14),
-                      child: Icon(widget.prefixIcon,
-                          size: 20, color: ShadcnColors.mutedForeground),
+                      child: Icon(
+                        widget.prefixIcon,
+                        size: 20,
+                        color: ShadcnColors.mutedForeground,
+                      ),
                     )
                   : null),
-          suffix: widget.suffixIcon,
+          suffix:
+              widget.suffixIcon ??
+              (widget.isPassword
+                  ? CupertinoButton(
+                      padding: const EdgeInsets.only(right: 10),
+                      onPressed: () =>
+                          setState(() => _obscureText = !_obscureText),
+                      minimumSize: const Size(0, 0),
+                      child: Icon(
+                        _obscureText
+                            ? CupertinoIcons.eye_slash
+                            : CupertinoIcons.eye,
+                        size: 20,
+                        color: ShadcnColors.mutedForeground,
+                      ),
+                    )
+                  : null),
           style: const TextStyle(
             color: ShadcnColors.foreground,
             fontSize: 16,
@@ -104,18 +126,43 @@ class _AppTextFieldState extends State<AppTextField> {
           cursorWidth: 2,
           cursorRadius: const Radius.circular(2),
         ),
-        if (widget.errorText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Text(
-              widget.errorText!,
-              style: const TextStyle(
-                color: ShadcnColors.destructive,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
+
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              final offsetAnimation =
+                  Tween<Offset>(
+                    begin: const Offset(0, -0.2),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  );
+
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: offsetAnimation, child: child),
+              );
+            },
+            child: widget.errorText != null
+                ? Container(
+                    key: ValueKey<String>(widget.errorText!),
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: Text(
+                      widget.errorText!,
+                      style: const TextStyle(
+                        color: ShadcnColors.destructive,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  )
+                : const SizedBox(key: ValueKey('none'), width: double.infinity),
           ),
+        ),
       ],
     );
   }
