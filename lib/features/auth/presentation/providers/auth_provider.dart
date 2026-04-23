@@ -1,8 +1,10 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_core/core/apis/app/index.dart';
 import 'package:flutter_core/core/apis/app/client/auth.dart';
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
+import 'package:flutter_core/main.dart';
+import 'package:flutter_query/flutter_query.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 // ---------------------------------------------------------------------------
@@ -34,8 +36,9 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final LocalStorage _storage;
   final AuthApiClient _authClient;
+  final QueryClient _queryClient;
 
-  AuthNotifier(this._storage, this._authClient) : super(const AuthState()) {
+  AuthNotifier(this._storage, this._authClient, this._queryClient) : super(const AuthState()) {
     _checkAuth();
   }
 
@@ -46,6 +49,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // 1. Access token exists → authenticated
     if (accessToken != null) {
       state = const AuthState(status: AuthStatus.authenticated);
+      _queryClient.invalidateQueries(
+        queryKey: ['auth', 'me'],
+        exact: true,
+        refetchType: RefetchType.active,
+      );
       return;
     }
 
@@ -65,6 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         refreshToken: response.data.refreshToken,
       );
       state = const AuthState(status: AuthStatus.authenticated);
+      _queryClient.invalidateQueries(queryKey: ['auth', 'me']);
     } catch (_) {
       // Refresh token expired — clear everything, force re-login
       await _storage.clearAll();
@@ -79,12 +88,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
       refreshToken: refreshToken,
     );
     state = const AuthState(status: AuthStatus.authenticated);
+    
+    // Invalidate profile query to trigger fresh fetch
+    _queryClient.invalidateQueries(
+      queryKey: ['auth', 'me'],
+      refetchType: RefetchType.active,
+    );
   }
 
   /// Called on logout — clears all tokens.
   Future<void> logout() async {
     await _storage.clearAll();
     state = const AuthState(status: AuthStatus.unauthenticated);
+    
+    // Clear the user cache on logout
+    _queryClient.removeQueries(
+      queryKey: ['auth', 'me'],
+      exact: true,
+    );
   }
 }
 
@@ -96,5 +117,6 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.read(localStorageProvider),
     ref.read(apiClientProvider).auth,
+    ref.read(queryClientProvider),
   );
 });

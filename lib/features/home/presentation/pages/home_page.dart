@@ -1,15 +1,17 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends HookConsumerWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = CupertinoTheme.of(context);
+    final auth = useAuth(ref);
+    final user = auth.user;
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -40,10 +42,10 @@ class HomePage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting row
+              // Dynamic Greeting row linked to the cached user profile
               Row(
                 children: [
-                  // Avatar placeholder
+                  // Avatar with cached URL
                   Container(
                     width: 52,
                     height: 52,
@@ -54,12 +56,20 @@ class HomePage extends ConsumerWidget {
                         color: ShadcnColors.border,
                         width: 1.5,
                       ),
+                      image: user?.avatarUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(user!.avatarUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
-                    child: const Icon(
-                      CupertinoIcons.person_fill,
-                      color: ShadcnColors.mutedForeground,
-                      size: 26,
-                    ),
+                    child: user?.avatarUrl == null
+                        ? const Icon(
+                            CupertinoIcons.person_fill,
+                            color: ShadcnColors.mutedForeground,
+                            size: 26,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 14),
                   Column(
@@ -73,7 +83,7 @@ class HomePage extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Welcome back!',
+                        user != null ? 'Welcome back, ${user.displayName.split(' ')[0]}!' : 'Welcome back!',
                         style: theme.textTheme.textStyle.copyWith(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -132,17 +142,6 @@ class HomePage extends ConsumerWidget {
                   ),
                 ),
               ),
-
-              // Logout button at bottom
-              AppButton(
-                text: 'Sign Out',
-                variant: AppButtonVariant.outline,
-                fullWidth: true,
-                size: AppButtonSize.lg,
-                icon: CupertinoIcons.square_arrow_right,
-                onPressed: () => ref.read(authProvider.notifier).logout(),
-              ),
-              const SizedBox(height: 8),
             ],
           ),
         ),

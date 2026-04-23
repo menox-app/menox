@@ -1,5 +1,6 @@
 import 'package:flutter_core/core/apis/app/client/crud.dart';
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
+import 'package:flutter_core/core/apis/app/interfaces/user.dart';
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 
@@ -19,6 +20,12 @@ class AuthApiClient extends AppCrudApiClient<BaseRecord> {
   Future<BaseResponse<RefreshTokenResponse>> refreshToken(RefreshTokenBody body) async {
     final response = await client.post("$resourcePath/refresh", data: body.toJson());
     return mapToCustomResponse(response, RefreshTokenResponse.fromJson);
+  }
+
+  /// Fetches the profile of the currently logged-in user.
+  Future<BaseResponse<User>> getMe() async {
+    final response = await client.get("$resourcePath/me");
+    return mapToCustomResponse(response, User.fromJson);
   }
 
   @override

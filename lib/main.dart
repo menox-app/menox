@@ -21,18 +21,19 @@ void main() async {
   await bootstrap(flavorConfig);
 }
 
-
 Future<void> bootstrap(FlavorConfig flavorConfig) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
   final localStorage = LocalStorage(prefs);
+  final queryClient = QueryClient();
 
   runApp(
     ProviderScope(
       overrides: [
         localStorageProvider.overrideWithValue(localStorage),
         flavorConfigProvider.overrideWithValue(flavorConfig),
+        queryClientProvider.overrideWithValue(queryClient),
       ],
       child: QueryClientProvider(
         create: (context) => QueryClient(),
@@ -41,6 +42,10 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
     ),
   );
 }
+
+final queryClientProvider = Provider<QueryClient>(
+  (ref) => throw UnimplementedError(),
+);
 
 class MyApp extends ConsumerWidget {
   final String appName;
@@ -61,11 +66,7 @@ class MyApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('vi'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('vi')],
     );
   }
 }
-
