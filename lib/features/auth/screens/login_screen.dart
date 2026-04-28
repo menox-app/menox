@@ -12,12 +12,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
-import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
+import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 
-class LoginPage extends HookConsumerWidget {
-  const LoginPage({super.key});
+class LoginScreen extends HookConsumerWidget {
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

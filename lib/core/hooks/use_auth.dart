@@ -1,6 +1,6 @@
 import 'package:flutter_core/core/apis/app/interfaces/user.dart';
-import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
-import 'package:flutter_core/features/user/presentation/providers/user_provider.dart';
+import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
+import 'package:flutter_core/features/user/hooks/user_provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 

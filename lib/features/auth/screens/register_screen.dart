@@ -7,8 +7,8 @@ import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_text_field.dart';
-import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
-import 'package:flutter_core/features/auth/presentation/providers/signup_provider.dart';
+import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
+import 'package:flutter_core/features/auth/hooks/signup_provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_query/flutter_query.dart';
 import 'package:go_router/go_router.dart';
@@ -18,8 +18,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_core/core/constants/avatar_constants.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class RegisterPage extends HookConsumerWidget {
-  const RegisterPage({super.key});
+class RegisterScreen extends HookConsumerWidget {
+  const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

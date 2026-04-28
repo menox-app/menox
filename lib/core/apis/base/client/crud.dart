@@ -24,12 +24,18 @@ abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
   ) async {
     final response = await client.get('', queryParameters: request.params);
 
-    final List<dynamic> list = response.data['data'];
+    final rawData = response.data;
+    final List<dynamic> list = rawData['data'] ?? [];
+
+    // API returns "success": true (bool), convert to status string
+    final status = rawData['status'] ??
+        (rawData['success'] == true ? 'success' : 'error');
+
     return BasePaginationResponse<T>(
       data: list.map((e) => fromJson(e)).toList(),
-      status: response.data['status'] ?? 'success',
+      status: status,
       statusCode: response.statusCode ?? 200,
-      pagination: PaginationInfo.fromJson(response.data['pagination']),
+      meta: PaginationInfo.fromJson(rawData['meta'] ?? {}),
     );
   }
 

@@ -1,20 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 
-class MessagesPage extends StatelessWidget {
-  const MessagesPage({super.key});
+class ActivityScreen extends StatelessWidget {
+  const ActivityScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: Text('Messages'),
+        middle: Text('Activity'),
         border: null,
         backgroundColor: ShadcnColors.background,
       ),
       child: SafeArea(
         child: Center(
-          child: Text('Messages Page Placeholder'),
+          child: Text('Activity Page Placeholder'),
         ),
       ),
     );

@@ -1,16 +1,16 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_core/features/auth/presentation/pages/login_page.dart';
-import 'package:flutter_core/features/auth/presentation/pages/register_page.dart';
-import 'package:flutter_core/features/auth/presentation/pages/welcome_page.dart';
+import 'package:flutter_core/features/auth/screens/login_screen.dart';
+import 'package:flutter_core/features/auth/screens/register_screen.dart';
+import 'package:flutter_core/features/auth/screens/welcome_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_core/features/messages/presentation/pages/messages_page.dart';
-import 'package:flutter_core/features/activity/presentation/pages/activity_page.dart';
-import 'package:flutter_core/features/profile/presentation/pages/profile_page.dart';
-import 'package:flutter_core/features/home/presentation/pages/main_screen.dart';
-import 'package:flutter_core/features/home/presentation/pages/home_page.dart';
-import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
+import 'package:flutter_core/features/messages/screens/messages_screen.dart';
+import 'package:flutter_core/features/activity/screens/activity_screen.dart';
+import 'package:flutter_core/features/profile/screens/profile_screen.dart';
+import 'package:flutter_core/features/home/screens/main_screen.dart';
+import 'package:flutter_core/features/home/screens/home_screen.dart';
+import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
 
 /// Routes that only unauthenticated users should access.
 const _authRoutes = {'/welcome', '/login', '/register'};
@@ -55,19 +55,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/welcome',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) =>
-            const CupertinoPage(child: WelcomePage()),
+            const CupertinoPage(child: WelcomeScreen()),
       ),
       GoRoute(
         path: '/login',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) =>
-            const CupertinoPage(child: LoginPage()),
+            const CupertinoPage(child: LoginScreen()),
       ),
       GoRoute(
         path: '/register',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) =>
-            const CupertinoPage(child: RegisterPage()),
+            const CupertinoPage(child: RegisterScreen()),
       ),
 
       // Main Shell Route
@@ -83,7 +83,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/',
                 pageBuilder: (context, state) =>
-                    const CupertinoPage(child: HomePage()),
+                    const CupertinoPage(child: HomeScreen()),
               ),
             ],
           ),
@@ -93,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/messages',
                 pageBuilder: (context, state) =>
-                    const CupertinoPage(child: MessagesPage()),
+                    const CupertinoPage(child: MessagesScreen()),
               ),
             ],
           ),
@@ -103,7 +103,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/activity',
                 pageBuilder: (context, state) =>
-                    const CupertinoPage(child: ActivityPage()),
+                    const CupertinoPage(child: ActivityScreen()),
               ),
             ],
           ),
@@ -113,7 +113,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 pageBuilder: (context, state) =>
-                    const CupertinoPage(child: ProfilePage()),
+                    const CupertinoPage(child: ProfileScreen()),
               ),
             ],
           ),

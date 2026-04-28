@@ -20,7 +20,11 @@ class BasePaginationRequest<Params> extends BaseRequest<void> {
   final Params? extraParams;
 
   BasePaginationRequest({this.page, this.limit, this.extraParams})
-    : super(params: {'page': page, 'limit': limit, 'extra': extraParams});
+    : super(params: {
+        if (page != null) 'page': page,
+        if (limit != null) 'limit': limit,
+        if (extraParams != null) 'extra': extraParams,
+      });
 }
 
 /// Tương đương: BaseGetByIdRequest & BaseDeleteRequest

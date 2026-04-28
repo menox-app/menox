@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/features/auth/presentation/providers/auth_provider.dart';
-import 'package:flutter_core/features/profile/presentation/widgets/profile_widgets.dart';
+import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
+import 'package:flutter_core/features/profile/widgets/profile_widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class ProfilePage extends HookConsumerWidget {
-  const ProfilePage({super.key});
+class ProfileScreen extends HookConsumerWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

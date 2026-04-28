@@ -21,16 +21,14 @@ class PaginationInfo {
   final int limit;
   final int total;
   final int pages;
-  final int totalDocs;
-  final int totalPages;
+  final bool hasMore;
 
   PaginationInfo({
     required this.page,
     required this.limit,
     required this.total,
     required this.pages,
-    required this.totalDocs,
-    required this.totalPages,
+    required this.hasMore,
   });
 
   factory PaginationInfo.fromJson(Map<String, dynamic> json) {
@@ -39,22 +37,21 @@ class PaginationInfo {
       limit: json['limit'] ?? 0,
       total: json['total'] ?? 0,
       pages: json['pages'] ?? 0,
-      totalDocs: json['totalDocs'] ?? json['total'] ?? 0,
-      totalPages: json['totalPages'] ?? json['pages'] ?? 0,
+      hasMore: json['has_more'] ?? false,
     );
   }
 }
 
 /// Tương đương: BasePaginationResponse<T>
 class BasePaginationResponse<T> extends BaseResponse<List<T>> {
-  final PaginationInfo pagination;
+  final PaginationInfo meta;
 
   BasePaginationResponse({
     required super.data,
     required super.status,
     super.message,
     required super.statusCode,
-    required this.pagination,
+    required this.meta,
   });
 }
 
