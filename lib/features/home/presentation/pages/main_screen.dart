@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/interfaces/user.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
+import 'package:flutter_core/core/storage/local_storage.dart';
 import 'package:flutter_core/core/ui/widgets/app_bottom_bar.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_query/flutter_query.dart';
@@ -18,6 +19,11 @@ class MainScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = useAuth(ref);
     final apiClient = AppApi.instance;
+    final localStorage = ref.read(localStorageProvider);
+
+    // ✅ Layer 2: Đọc cached user — sync, < 1ms, hiện ngay
+    final cachedUserJson = localStorage.getCachedUserJson();
+    final cachedUser = cachedUserJson != null ? User.fromJson(cachedUserJson) : null;
 
     // Bootstrapper: This query runs globally in the shell to keep the Store in sync
     final query = useQuery<User, dynamic>(const ['auth', 'me'], (
@@ -27,7 +33,7 @@ class MainScreen extends HookConsumerWidget {
       final user = response.data;
 
       // Enrich with high-fidelity mock data if fields are missing
-      return User(
+      final enrichedUser = User(
         id: user.id,
         email: user.email,
         username: user.username,
@@ -50,7 +56,12 @@ class MainScreen extends HookConsumerWidget {
             ? user.tags
             : ['#Minimalism', '#DesignThinking', '#Photography'],
       );
-    });
+
+      // ✅ Cache profile cho lần mở app tiếp theo
+      localStorage.saveUserProfile(enrichedUser.toJson());
+
+      return enrichedUser;
+    }, placeholder: cachedUser);
 
     // Sync Query data to our custom Auth Hook / Store
     useEffect(() {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +19,7 @@ class LocalStorage {
   // Token keys
   static const String _kAccessToken = 'access_token';
   static const String _kRefreshToken = 'refresh_token';
+  static const String _kCachedUser = 'cached_user';
 
   // Save both tokens at once
   Future<void> saveTokens({
@@ -53,6 +56,30 @@ class LocalStorage {
 
   Future<void> removeRefreshToken() async {
     await _prefs.remove(_kRefreshToken);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Cached User Profile — hiện ngay khi mở app, không đợi network
+  // ─────────────────────────────────────────────────────────────
+
+  /// Lưu user profile JSON để hiện ngay lần sau
+  Future<void> saveUserProfile(Map<String, dynamic> userJson) async {
+    await _prefs.setString(_kCachedUser, jsonEncode(userJson));
+  }
+
+  /// Đọc cached user — sync, < 1ms
+  Map<String, dynamic>? getCachedUserJson() {
+    final raw = _prefs.getString(_kCachedUser);
+    if (raw == null) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> clearCachedUser() async {
+    await _prefs.remove(_kCachedUser);
   }
 
   // Clear all

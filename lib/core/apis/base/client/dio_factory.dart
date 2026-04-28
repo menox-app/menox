@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_core/core/config/app_config.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
@@ -15,6 +17,10 @@ class DioFactory {
 
   final String apiBaseUrl;
   final LocalStorage _localStorage;
+
+  /// Callback khi auth thất bại (refresh token fail) → UI redirect login.
+  /// AuthNotifier tự đăng ký callback này khi được tạo.
+  static VoidCallback? onAuthFailure;
 
   /// Dio riêng chỉ để gọi refresh token — KHÔNG gắn auth interceptor (tránh loop)
   late final Dio _refreshDio;
@@ -109,8 +115,9 @@ class DioFactory {
           final retry = await dio.fetch(error.requestOptions);
           return handler.resolve(retry);
         } catch (_) {
-          // Refresh thất bại → clear tokens
+          // Refresh thất bại → clear tokens + thông báo UI
           await _localStorage.clearAll();
+          onAuthFailure?.call();
           return handler.reject(error);
         }
       },

@@ -29,7 +29,7 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
   final localStorage = LocalStorage(prefs);
   final queryClient = QueryClient();
 
-  // Khởi tạo API SDK — 1 lần, dùng toàn app qua `api.auth.signIn(...)`
+  // Khởi tạo API SDK
   AppApi.initialize(
     baseUrl: flavorConfig.baseUrl,
     localStorage: localStorage,

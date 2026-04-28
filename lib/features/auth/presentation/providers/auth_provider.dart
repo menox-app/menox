@@ -1,6 +1,4 @@
-import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
-import 'package:flutter_core/core/apis/app/client/auth.dart';
-import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
+import 'package:flutter_core/core/apis/base/client/dio_factory.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
 import 'package:flutter_core/main.dart';
 import 'package:flutter_query/flutter_query.dart';
@@ -30,52 +28,46 @@ class AuthState {
 }
 
 // ---------------------------------------------------------------------------
-// Auth Notifier
+// Auth Notifier — Instant Auth Pattern
 // ---------------------------------------------------------------------------
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final LocalStorage _storage;
-  final AuthApiClient _authClient;
   final QueryClient _queryClient;
 
-  AuthNotifier(this._storage, this._authClient, this._queryClient) : super(const AuthState()) {
-    _checkAuth();
+  AuthNotifier(this._storage, this._queryClient)
+      : super(AuthState(
+          status: _storage.getToken() != null
+              ? AuthStatus.authenticated
+              : AuthStatus.unauthenticated,
+        )) {
+    // Đăng ký callback — khi DioFactory refresh fail → tự logout
+    DioFactory.onAuthFailure = _handleAuthFailure;
+
+    if (state.isAuthenticated) {
+      _verifyInBackground();
+    }
   }
 
-  /// Called on app startup — determines if user is authenticated.
-  Future<void> _checkAuth() async {
-    final accessToken = _storage.getToken();
+  /// Gọi bởi DioFactory khi refresh token thất bại
+  void _handleAuthFailure() {
+    _storage.clearAll();
+    state = const AuthState(status: AuthStatus.unauthenticated);
+    _queryClient.removeQueries(queryKey: ['auth', 'me'], exact: true);
+  }
 
-    // 1. Access token exists → authenticated
-    if (accessToken != null) {
-      state = const AuthState(status: AuthStatus.authenticated);
+  /// Background verification — user đã thấy Home với cached data.
+  /// Nếu token hết hạn, interceptor tự refresh.
+  /// Nếu refresh cũng fail → kick về Login.
+  Future<void> _verifyInBackground() async {
+    try {
       _queryClient.invalidateQueries(
         queryKey: ['auth', 'me'],
         exact: true,
         refetchType: RefetchType.active,
       );
-      return;
-    }
-
-    // 2. No access token → try refresh
-    final refreshToken = _storage.getRefreshToken();
-    if (refreshToken == null) {
-      state = const AuthState(status: AuthStatus.unauthenticated);
-      return;
-    }
-
-    try {
-      final response = await _authClient.refreshToken(
-        RefreshTokenBody(refreshToken: refreshToken),
-      );
-      await _storage.saveTokens(
-        accessToken: response.data.token,
-        refreshToken: response.data.refreshToken,
-      );
-      state = const AuthState(status: AuthStatus.authenticated);
-      _queryClient.invalidateQueries(queryKey: ['auth', 'me']);
     } catch (_) {
-      // Refresh token expired — clear everything, force re-login
+      // Token + refresh đều fail → clear & redirect login
       await _storage.clearAll();
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
@@ -96,7 +88,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Called on logout — clears all tokens.
+  /// Called on logout — clears all tokens + cached user.
   Future<void> logout() async {
     await _storage.clearAll();
     state = const AuthState(status: AuthStatus.unauthenticated);
@@ -116,7 +108,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.read(localStorageProvider),
-    AppApi.instance.auth,
     ref.read(queryClientProvider),
   );
 });
