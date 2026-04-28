@@ -5,24 +5,24 @@ import 'package:flutter_core/core/apis/base/interfaces/record.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 
+/// Base CRUD client — KHÔNG còn resourcePath.
+/// Dio.baseUrl đã chứa resource path (vd: /api/v1/auth).
+/// Tất cả methods dùng relative path: '', '/{id}', '/slug/{slug}'.
 abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
   BaseCrudApiClient(super.client);
 
-  // Hàm này bắt buộc lớp con phải triển khai để parse JSON sang T
+  // Bắt buộc lớp con triển khai để parse JSON sang T
   T fromJson(Map<String, dynamic> json);
 
-  // Đường dẫn resource (ví dụ: '/users', '/products')
-  String get resourcePath;
-
   Future<BaseResponse<T>> create(BaseCreateRequest<T> request) async {
-    final response = await client.post(resourcePath, data: serialize(request.body));
+    final response = await client.post('', data: serialize(request.body));
     return mapToResponse(response);
   }
 
   Future<BasePaginationResponse<T>> getAll(
     BasePaginationRequest request,
   ) async {
-    final response = await client.get(resourcePath, queryParameters: request.params);
+    final response = await client.get('', queryParameters: request.params);
 
     final List<dynamic> list = response.data['data'];
     return BasePaginationResponse<T>(
@@ -34,25 +34,25 @@ abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
   }
 
   Future<BaseResponse<T>> getById(BaseGetByIdRequest request) async {
-    final response = await client.get('$resourcePath/${request.pathParams?['id']}');
+    final response = await client.get('/${request.pathParams?['id']}');
     return mapToResponse(response);
   }
 
   Future<BaseResponse<T>> getBySlug(BaseGetBySlugRequest request) async {
-    final response = await client.get('$resourcePath/${request.pathParams?['slug']}');
+    final response = await client.get('/slug/${request.pathParams?['slug']}');
     return mapToResponse(response);
   }
 
   Future<BaseResponse<T>> update(BaseUpdateRequest<T> request) async {
     final response = await client.put(
-      '$resourcePath/${request.pathParams?['id']}',
+      '/${request.pathParams?['id']}',
       data: serialize(request.body),
     );
     return mapToResponse(response);
   }
 
   Future<BaseResponse<void>> delete(BaseDeleteRequest request) async {
-    final response = await client.delete('$resourcePath/${request.pathParams?['id']}');
+    final response = await client.delete('/${request.pathParams?['id']}');
     return BaseResponse(
       data: null,
       status: response.data['status'] ?? 'success',

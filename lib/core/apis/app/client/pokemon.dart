@@ -3,11 +3,9 @@ import 'package:flutter_core/core/apis/app/client/crud.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 import 'package:flutter_core/core/apis/app/interfaces/pokemon.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_core/core/apis/base/client/dio_provider.dart';
 
 class PokemonApiClient extends AppCrudApiClient<Pokemon> {
-  PokemonApiClient(super.client) : super(resource: "pokemon");
+  PokemonApiClient() : super(resource: "pokemon");
 
   @override
   Pokemon fromJson(Map<String, dynamic> json) => Pokemon.fromJson(json);
@@ -21,7 +19,7 @@ class PokemonApiClient extends AppCrudApiClient<Pokemon> {
     final offset = (page - 1) * limit;
 
     final response = await client.get(
-      resourcePath,
+      '',
       queryParameters: {
         'offset': offset,
         'limit': limit,
@@ -61,8 +59,3 @@ class PokemonApiClient extends AppCrudApiClient<Pokemon> {
     );
   }
 }
-
-final pokemonApiClientProvider = Provider<PokemonApiClient>((ref) {
-  final dio = ref.watch(dioProvider);
-  return PokemonApiClient(dio);
-});

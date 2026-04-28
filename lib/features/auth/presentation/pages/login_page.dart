@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_query/flutter_query.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +22,7 @@ class LoginPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = CupertinoTheme.of(context);
-    final apiClient = ref.watch(apiClientProvider).auth;
+    final apiClient = AppApi.instance.auth;
 
     final pageController = usePageController();
     final currentStep = useState(0);

@@ -1,4 +1,4 @@
-import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/client/auth.dart';
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
@@ -116,7 +116,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.read(localStorageProvider),
-    ref.read(apiClientProvider).auth,
+    AppApi.instance.auth,
     ref.read(queryClientProvider),
   );
 });

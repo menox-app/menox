@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/interfaces/user.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/ui/widgets/app_bottom_bar.dart';
@@ -17,7 +17,7 @@ class MainScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = useAuth(ref);
-    final apiClient = ref.watch(apiClientProvider);
+    final apiClient = AppApi.instance;
 
     // Bootstrapper: This query runs globally in the shell to keep the Store in sync
     final query = useQuery<User, dynamic>(const ['auth', 'me'], (

@@ -7,6 +7,7 @@ import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
 import 'package:flutter_core/core/config/router.dart';
 import 'package:flutter_core/core/config/flavor_config.dart';
+import 'package:flutter_core/core/apis/app/index.dart';
 
 import 'package:flutter_core/core/config/env.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -27,6 +28,12 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
   final prefs = await SharedPreferences.getInstance();
   final localStorage = LocalStorage(prefs);
   final queryClient = QueryClient();
+
+  // Khởi tạo API SDK — 1 lần, dùng toàn app qua `api.auth.signIn(...)`
+  AppApi.initialize(
+    baseUrl: flavorConfig.baseUrl,
+    localStorage: localStorage,
+  );
 
   runApp(
     ProviderScope(

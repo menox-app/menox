@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
@@ -26,7 +26,7 @@ class RegisterPage extends HookConsumerWidget {
     final theme = CupertinoTheme.of(context);
     final pageController = usePageController();
     final currentStep = useState(0);
-    final apiClient = ref.watch(apiClientProvider).auth;
+    final apiClient = AppApi.instance.auth;
 
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
