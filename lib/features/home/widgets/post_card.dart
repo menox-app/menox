@@ -462,59 +462,61 @@ class PostCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: ShadcnColors.secondary,
-      highlightColor: ShadcnColors.muted,
-      child: Container(
-        color: ShadcnColors.background,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SkeletonBox(
-              width: 38,
-              height: 38,
-              borderRadius: BorderRadius.all(Radius.circular(19)),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _SkeletonBox(width: 112, height: 14),
-                      SizedBox(width: 8),
-                      _SkeletonBox(width: 28, height: 12),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  _SkeletonBox(width: double.infinity, height: 13),
-                  SizedBox(height: 8),
-                  FractionallySizedBox(
-                    widthFactor: 0.72,
-                    child: _SkeletonBox(height: 13),
-                  ),
-                  SizedBox(height: 12),
-                  _SkeletonBox(
-                    width: double.infinity,
-                    height: 156,
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _SkeletonBox(width: 46, height: 18),
-                      SizedBox(width: 18),
-                      _SkeletonBox(width: 46, height: 18),
-                      SizedBox(width: 18),
-                      _SkeletonBox(width: 46, height: 18),
-                    ],
-                  ),
-                ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+      child: Shimmer.fromColors(
+        baseColor: ShadcnColors.mutedForeground.withValues(alpha: 0.1),
+        highlightColor: ShadcnColors.primary.withValues(alpha: 0.1),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SkeletonBox(
+                width: 38,
+                height: 38,
+                borderRadius: BorderRadius.all(Radius.circular(19)),
               ),
-            ),
-          ],
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _SkeletonBox(width: 112, height: 14),
+                        SizedBox(width: 8),
+                        _SkeletonBox(width: 28, height: 12),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    _SkeletonBox(width: double.infinity, height: 13),
+                    SizedBox(height: 8),
+                    FractionallySizedBox(
+                      widthFactor: 0.72,
+                      child: _SkeletonBox(height: 13),
+                    ),
+                    SizedBox(height: 12),
+                    _SkeletonBox(
+                      width: double.infinity,
+                      height: 250,
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _SkeletonBox(width: 46, height: 18),
+                        SizedBox(width: 18),
+                        _SkeletonBox(width: 46, height: 18),
+                        SizedBox(width: 18),
+                        _SkeletonBox(width: 46, height: 18),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -530,12 +532,14 @@ class _SkeletonBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: width,
       height: height,
-      decoration: BoxDecoration(
-        color: ShadcnColors.foreground,
-        borderRadius: borderRadius ?? BorderRadius.circular(6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: ShadcnColors.mutedForeground,
+          borderRadius: borderRadius ?? BorderRadius.circular(4),
+        ),
       ),
     );
   }

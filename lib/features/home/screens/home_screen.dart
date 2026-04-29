@@ -223,7 +223,7 @@ class HomeScreen extends HookConsumerWidget {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => const PostCardSkeleton(),
-                childCount: 5,
+                childCount: 5,      
               ),
             )
           else if (displayPosts.isEmpty)
