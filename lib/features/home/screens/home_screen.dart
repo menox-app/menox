@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
@@ -55,24 +56,51 @@ class HomeScreen extends HookConsumerWidget {
         displayName: 'Memox Developer',
         avatarUrl: 'https://i.pravatar.cc/150?u=memox_dev',
       ),
-      content: 'Here is a test video to see how the video player works in the new Threads-style layout! 🎥✨',
+      content:
+          'Here is a test video to see how the video player works in the new Threads-style layout! 🎥✨',
       medias: [
         Media(
           id: 'dummy_media_1',
-          url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+          url:
+              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
           type: 'video',
           postId: 'dummy_video_post_1',
         ),
       ],
       likeCount: 420,
-      extraData: {
-        'comment_count': 69,
-        'repost_count': 12,
-        'share_count': 8,
-      },
+      commentCount: 69,
+      repostCount: 12,
+      shareCount: 8,
+      highlightComments: [
+        Comment(
+          id: 'dummy_comment_1',
+          author: Author(
+            id: 'dummy_comment_author_1',
+            username: 'pixel_friend',
+            displayName: 'Pixel Friend',
+            avatarUrl: 'https://i.pravatar.cc/150?u=pixel_friend',
+          ),
+          content: 'This layout feels much closer to a real social feed.',
+          likeCount: 32,
+        ),
+        Comment(
+          id: 'dummy_comment_2',
+          author: Author(
+            id: 'dummy_comment_author_2',
+            username: 'ui_daily',
+            displayName: 'UI Daily',
+            avatarUrl: 'https://i.pravatar.cc/150?u=ui_daily',
+          ),
+          content: 'The video preview is smooth on my side.',
+          likeCount: 18,
+        ),
+      ],
     );
 
-    final displayPosts = [dummyVideoPost, ...allPosts];
+    final isInitialLoading = postsQuery.isLoading && allPosts.isEmpty;
+    final displayPosts = isInitialLoading
+        ? <Post>[]
+        : [dummyVideoPost, ...allPosts];
 
     // ── Scroll Controller for infinite load ──
     final scrollController = useScrollController();
@@ -114,8 +142,7 @@ class HomeScreen extends HookConsumerWidget {
           icon: CupertinoIcons.at,
           sizeOverride: 32,
           variant: AppButtonVariant.ghost,
-          onPressed: () =>{},
-        
+          onPressed: () => {},
         ),
       ),
       child: CustomScrollView(
@@ -158,10 +185,23 @@ class HomeScreen extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 2.5,
                     children: [
-                    Text(user?.username ?? 'No username', style: theme.textTheme.textStyle.copyWith(color: ShadcnColors.foreground, fontWeight: FontWeight.w500, fontSize: 15),),
-                    Text("What's happening on your mind?", style: theme.textTheme.textStyle.copyWith(fontSize: 13, color: ShadcnColors.mutedForeground),),
-                  ],
-                  )
+                      Text(
+                        user?.username ?? 'No username',
+                        style: theme.textTheme.textStyle.copyWith(
+                          color: ShadcnColors.foreground,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        "What's happening on your mind?",
+                        style: theme.textTheme.textStyle.copyWith(
+                          fontSize: 13,
+                          color: ShadcnColors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -169,11 +209,8 @@ class HomeScreen extends HookConsumerWidget {
 
           // Divider
           const SliverToBoxAdapter(
-            child: Divider(
-              height: 1,
-              color: ShadcnColors.border,
-            ),
-          ),  
+            child: Divider(height: 1, color: ShadcnColors.border),
+          ),
 
           // ── Pull to Refresh ──
           CupertinoSliverRefreshControl(
@@ -182,9 +219,12 @@ class HomeScreen extends HookConsumerWidget {
             },
           ),
           // ── Posts List ──
-          if (postsQuery.isLoading && displayPosts.isEmpty)
-            const SliverFillRemaining(
-              child: Center(child: CupertinoActivityIndicator()),
+          if (isInitialLoading)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => const PostCardSkeleton(),
+                childCount: 5,
+              ),
             )
           else if (displayPosts.isEmpty)
             SliverFillRemaining(
@@ -237,10 +277,10 @@ class HomeScreen extends HookConsumerWidget {
 
           // ── Loading more indicator ──
           if (postsQuery.isFetchingNextPage)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Center(child: CupertinoActivityIndicator()),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => const PostCardSkeleton(),
+                childCount: 2,
               ),
             ),
 

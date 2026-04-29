@@ -1,3 +1,4 @@
+import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -10,12 +11,7 @@ class Author {
   final String? displayName;
   final String? avatarUrl;
 
-  Author({
-    this.id,
-    this.username = '',
-    this.displayName,
-    this.avatarUrl,
-  });
+  Author({this.id, this.username = '', this.displayName, this.avatarUrl});
 
   factory Author.fromJson(Map<String, dynamic> json) => _$AuthorFromJson(json);
 
@@ -52,9 +48,16 @@ class Post extends BaseRecord<String> {
   final List<Media>? medias;
   @JsonKey(fromJson: _numFromJson)
   final num? likeCount;
+  @JsonKey(fromJson: _numFromJson)
+  final num? commentCount;
+  @JsonKey(fromJson: _numFromJson)
+  final num? repostCount;
+  @JsonKey(fromJson: _numFromJson)
+  final num? shareCount;
   @JsonKey(fromJson: _boolFromJson)
   final bool? isLiked;
   final bool? isFollowingAuthor;
+  final List<Comment>? highlightComments;
 
   Post({
     super.id = '',
@@ -67,8 +70,12 @@ class Post extends BaseRecord<String> {
     this.author,
     this.medias,
     this.likeCount,
+    this.commentCount,
+    this.repostCount,
+    this.shareCount,
     this.isLiked,
     this.isFollowingAuthor,
+    this.highlightComments,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -91,8 +98,12 @@ class Post extends BaseRecord<String> {
       author: author,
       medias: medias,
       likeCount: likeCount,
+      commentCount: commentCount,
+      repostCount: repostCount,
+      shareCount: shareCount,
       isLiked: isLiked,
       isFollowingAuthor: isFollowingAuthor,
+      highlightComments: highlightComments,
     );
   }
 }

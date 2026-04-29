@@ -26,6 +26,7 @@ Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
       ? null
       : Author.fromJson(json['author'] as Map<String, dynamic>),
   replyToUsername: json['reply_to_username'] as String?,
+  likeCount: _numFromJson(json['like_count']),
   replyCount: _numFromJson(json['reply_count']),
   replies: (json['replies'] as List<dynamic>?)
       ?.map((e) => Comment.fromJson(e as Map<String, dynamic>))
@@ -46,6 +47,7 @@ Map<String, dynamic> _$CommentToJson(Comment instance) => <String, dynamic>{
   'media_metadata': instance.mediaMetadata,
   'author': instance.author?.toJson(),
   'reply_to_username': instance.replyToUsername,
+  'like_count': instance.likeCount,
   'reply_count': instance.replyCount,
   'replies': instance.replies?.map((e) => e.toJson()).toList(),
 };

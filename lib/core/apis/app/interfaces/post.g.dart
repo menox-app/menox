@@ -54,8 +54,14 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
       ?.map((e) => Media.fromJson(e as Map<String, dynamic>))
       .toList(),
   likeCount: _numFromJson(json['like_count']),
+  commentCount: _numFromJson(json['comment_count']),
+  repostCount: _numFromJson(json['repost_count']),
+  shareCount: _numFromJson(json['share_count']),
   isLiked: _boolFromJson(json['is_liked']),
   isFollowingAuthor: json['is_following_author'] as bool?,
+  highlightComments: (json['highlight_comments'] as List<dynamic>?)
+      ?.map((e) => Comment.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -68,6 +74,12 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'author': instance.author?.toJson(),
   'medias': instance.medias?.map((e) => e.toJson()).toList(),
   'like_count': instance.likeCount,
+  'comment_count': instance.commentCount,
+  'repost_count': instance.repostCount,
+  'share_count': instance.shareCount,
   'is_liked': instance.isLiked,
   'is_following_author': instance.isFollowingAuthor,
+  'highlight_comments': instance.highlightComments
+      ?.map((e) => e.toJson())
+      .toList(),
 };

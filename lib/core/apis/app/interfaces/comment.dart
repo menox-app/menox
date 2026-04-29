@@ -19,6 +19,8 @@ class Comment extends BaseRecord<String> {
   final Author? author;
   final String? replyToUsername;
   @JsonKey(fromJson: _numFromJson)
+  final num? likeCount;
+  @JsonKey(fromJson: _numFromJson)
   final num? replyCount;
   final List<Comment>? replies;
 
@@ -37,6 +39,7 @@ class Comment extends BaseRecord<String> {
     this.mediaMetadata,
     this.author,
     this.replyToUsername,
+    this.likeCount,
     this.replyCount,
     this.replies,
   });

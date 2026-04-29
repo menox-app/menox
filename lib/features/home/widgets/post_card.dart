@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/features/home/widgets/media_carousel.dart';
+import 'package:shimmer/shimmer.dart';
 
 /// Threads-style post card:
 /// ┌──────────────────────────────────────┐
@@ -42,20 +44,14 @@ class PostCard extends StatelessWidget {
     return count.toString();
   }
 
-
-
-  num? _parseCount(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value;
-    return num.tryParse(value.toString());
-  }
-
   @override
   Widget build(BuildContext context) {
     final author = post.author;
     final medias = post.medias ?? [];
+    final highlightComments = (post.highlightComments ?? []).take(2).toList();
     final hasMedia = medias.isNotEmpty;
     final hasContent = post.content != null && post.content!.trim().isNotEmpty;
+    final hasHighlights = highlightComments.isNotEmpty;
 
     return Container(
       color: ShadcnColors.background,
@@ -65,11 +61,12 @@ class PostCard extends StatelessWidget {
           Stack(
             children: [
               // ── Thread line (drawn via CustomPaint to avoid negative height crashes) ──
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _ThreadLinePainter(color: ShadcnColors.border),
+              if (hasHighlights)
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _ThreadLinePainter(color: ShadcnColors.border),
+                  ),
                 ),
-              ),
 
               // ── Content ──
               Padding(
@@ -78,11 +75,7 @@ class PostCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Left column: Avatar ──
-                    Column(
-                      children: [
-                        _buildAvatar(author),
-                      ],
-                    ),
+                    Column(children: [_buildAvatar(author)]),
                     const SizedBox(width: 12),
 
                     // ── Right column: Header + Content + Media + Actions ──
@@ -105,9 +98,9 @@ class PostCard extends StatelessWidget {
                             MediaCarousel(
                               medias: medias,
                               likeCount: post.likeCount,
-                              commentCount: _parseCount(post.extraData['comment_count']),
-                              repostCount: _parseCount(post.extraData['repost_count']),
-                              shareCount: _parseCount(post.extraData['share_count']),
+                              commentCount: post.commentCount,
+                              repostCount: post.repostCount,
+                              shareCount: post.shareCount,
                             ),
                           ],
 
@@ -116,19 +109,7 @@ class PostCard extends StatelessWidget {
                           _buildActionBar(),
 
                           // ── Engagement counts ──
-                          if (post.likeCount != null && post.likeCount! > 0)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2, bottom: 4),
-                              child: Text(
-                                _buildEngagementText(),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: ShadcnColors.mutedForeground,
-                                ),
-                              ),
-                            )
-                          else
-                            const SizedBox(height: 4),
+                          SizedBox(height: hasHighlights ? 6 : 10),
                         ],
                       ),
                     ),
@@ -139,6 +120,8 @@ class PostCard extends StatelessWidget {
           ),
 
           // ── Bottom divider ──
+          if (hasHighlights) _buildHighlightComments(highlightComments),
+
           Container(height: 0.5, color: ShadcnColors.border),
         ],
       ),
@@ -146,6 +129,103 @@ class PostCard extends StatelessWidget {
   }
 
   // ── Avatar ──
+  Widget _buildHighlightComments(List<Comment> comments) {
+    return Column(
+      children: [
+        for (var index = 0; index < comments.length; index++)
+          _buildHighlightComment(
+            comments[index],
+            isLast: index == comments.length - 1,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHighlightComment(Comment comment, {required bool isLast}) {
+    final author = comment.author;
+    final hasContent =
+        comment.content != null && comment.content!.trim().isNotEmpty;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, isLast ? 12 : 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 38,
+            child: Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _HighlightLinePainter(
+                      color: ShadcnColors.border,
+                      stopAtAvatar: isLast,
+                    ),
+                  ),
+                ),
+                _buildAvatar(author),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          author?.displayName ?? author?.username ?? 'Unknown',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: ShadcnColors.foreground,
+                          ),
+                        ),
+                      ),
+                      if (comment.createdAt != null) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          _timeAgo(comment.createdAt),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: ShadcnColors.mutedForeground,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (hasContent)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        comment.content!,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
+                          color: ShadcnColors.foreground,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  _buildCommentActionBar(comment),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAvatar(Author? author) {
     return Container(
       width: 38,
@@ -253,16 +333,41 @@ class PostCard extends StatelessWidget {
           _actionButton(
             icon: CupertinoIcons.chat_bubble,
             color: ShadcnColors.foreground,
+            count: post.commentCount,
             onTap: () {},
           ),
           _actionButton(
             icon: CupertinoIcons.arrow_2_squarepath,
             color: ShadcnColors.foreground,
+            count: post.repostCount,
             onTap: () {},
           ),
           _actionButton(
             icon: CupertinoIcons.paperplane,
             color: ShadcnColors.foreground,
+            count: post.shareCount,
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentActionBar(Comment comment) {
+    return Transform.translate(
+      offset: const Offset(-8, 0),
+      child: Row(
+        children: [
+          _actionButton(
+            icon: CupertinoIcons.heart,
+            color: ShadcnColors.foreground,
+            count: comment.likeCount,
+            onTap: () {},
+          ),
+          _actionButton(
+            icon: CupertinoIcons.chat_bubble,
+            color: ShadcnColors.foreground,
+            count: comment.replyCount,
             onTap: () {},
           ),
         ],
@@ -301,14 +406,6 @@ class PostCard extends StatelessWidget {
       ),
     );
   }
-
-  String _buildEngagementText() {
-    final parts = <String>[];
-    if (post.likeCount != null && post.likeCount! > 0) {
-      parts.add('${_formatCount(post.likeCount)} likes');
-    }
-    return parts.join(' · ');
-  }
 }
 
 class _ThreadLinePainter extends CustomPainter {
@@ -333,5 +430,113 @@ class _ThreadLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ThreadLinePainter oldDelegate) {
     return oldDelegate.color != color;
+  }
+}
+
+class _HighlightLinePainter extends CustomPainter {
+  final Color color;
+  final bool stopAtAvatar;
+
+  _HighlightLinePainter({required this.color, required this.stopAtAvatar});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    final endY = stopAtAvatar ? 19.0 : size.height;
+    canvas.drawLine(const Offset(19, 0), Offset(19, endY), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HighlightLinePainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.stopAtAvatar != stopAtAvatar;
+  }
+}
+
+class PostCardSkeleton extends StatelessWidget {
+  const PostCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: ShadcnColors.secondary,
+      highlightColor: ShadcnColors.muted,
+      child: Container(
+        color: ShadcnColors.background,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SkeletonBox(
+              width: 38,
+              height: 38,
+              borderRadius: BorderRadius.all(Radius.circular(19)),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _SkeletonBox(width: 112, height: 14),
+                      SizedBox(width: 8),
+                      _SkeletonBox(width: 28, height: 12),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  _SkeletonBox(width: double.infinity, height: 13),
+                  SizedBox(height: 8),
+                  FractionallySizedBox(
+                    widthFactor: 0.72,
+                    child: _SkeletonBox(height: 13),
+                  ),
+                  SizedBox(height: 12),
+                  _SkeletonBox(
+                    width: double.infinity,
+                    height: 156,
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _SkeletonBox(width: 46, height: 18),
+                      SizedBox(width: 18),
+                      _SkeletonBox(width: 46, height: 18),
+                      SizedBox(width: 18),
+                      _SkeletonBox(width: 46, height: 18),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkeletonBox extends StatelessWidget {
+  final double? width;
+  final double height;
+  final BorderRadius? borderRadius;
+
+  const _SkeletonBox({this.width, required this.height, this.borderRadius});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: ShadcnColors.foreground,
+        borderRadius: borderRadius ?? BorderRadius.circular(6),
+      ),
+    );
   }
 }
