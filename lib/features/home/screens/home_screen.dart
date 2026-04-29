@@ -45,6 +45,35 @@ class HomeScreen extends HookConsumerWidget {
     final allPosts =
         postsQuery.data?.pages.expand((page) => page).toList() ?? [];
 
+    // ── Inject a dummy video post at the top for testing ──
+    final dummyVideoPost = Post(
+      id: 'dummy_video_post_1',
+      createdAt: DateTime.now(),
+      author: Author(
+        id: 'dummy_author',
+        username: 'memox_dev',
+        displayName: 'Memox Developer',
+        avatarUrl: 'https://i.pravatar.cc/150?u=memox_dev',
+      ),
+      content: 'Here is a test video to see how the video player works in the new Threads-style layout! 🎥✨',
+      medias: [
+        Media(
+          id: 'dummy_media_1',
+          url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+          type: 'video',
+          postId: 'dummy_video_post_1',
+        ),
+      ],
+      likeCount: 420,
+      extraData: {
+        'comment_count': 69,
+        'repost_count': 12,
+        'share_count': 8,
+      },
+    );
+
+    final displayPosts = [dummyVideoPost, ...allPosts];
+
     // ── Scroll Controller for infinite load ──
     final scrollController = useScrollController();
 
@@ -153,11 +182,11 @@ class HomeScreen extends HookConsumerWidget {
             },
           ),
           // ── Posts List ──
-          if (postsQuery.isLoading && allPosts.isEmpty)
+          if (postsQuery.isLoading && displayPosts.isEmpty)
             const SliverFillRemaining(
               child: Center(child: CupertinoActivityIndicator()),
             )
-          else if (allPosts.isEmpty)
+          else if (displayPosts.isEmpty)
             SliverFillRemaining(
               child: Center(
                 child: Column(
@@ -199,11 +228,11 @@ class HomeScreen extends HookConsumerWidget {
           else
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
-                if (index < allPosts.length) {
-                  return PostCard(post: allPosts[index]);
+                if (index < displayPosts.length) {
+                  return PostCard(post: displayPosts[index]);
                 }
                 return null;
-              }, childCount: allPosts.length),
+              }, childCount: displayPosts.length),
             ),
 
           // ── Loading more indicator ──

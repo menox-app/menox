@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/features/home/widgets/media_viewer.dart';
 import 'package:video_player/video_player.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'package:flutter_core/features/home/widgets/media_viewer.dart';
 
 /// Renders media for a post (Threads-style):
 /// - Single image → full-width rounded image
@@ -32,6 +35,7 @@ class MediaCarousel extends StatefulWidget {
 class _MediaCarouselState extends State<MediaCarousel> {
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
+  String? _videoError;
 
   static const double _mediaHeight = 280;
 
@@ -46,9 +50,17 @@ class _MediaCarouselState extends State<MediaCarousel> {
 
   void _initVideo(String url) {
     _videoController = VideoPlayerController.networkUrl(Uri.parse(url))
-      ..initialize().then((_) {
-        if (mounted) setState(() => _isVideoInitialized = true);
-      });
+      ..initialize()
+          .then((_) {
+            // Auto-play videos are usually muted by default
+            _videoController!.setVolume(0.0);
+            _videoController!.setLooping(true);
+            if (mounted) setState(() => _isVideoInitialized = true);
+          })
+          .catchError((error) {
+            debugPrint("Video init error: \$error");
+            if (mounted) setState(() => _videoError = error.toString());
+          });
   }
 
   @override
@@ -99,8 +111,11 @@ class _MediaCarouselState extends State<MediaCarousel> {
             errorWidget: (_, __, ___) => Container(
               color: ShadcnColors.secondary,
               child: const Center(
-                child: Icon(CupertinoIcons.photo,
-                    color: ShadcnColors.mutedForeground, size: 28),
+                child: Icon(
+                  CupertinoIcons.photo,
+                  color: ShadcnColors.mutedForeground,
+                  size: 28,
+                ),
               ),
             ),
           ),
@@ -118,58 +133,95 @@ class _MediaCarouselState extends State<MediaCarousel> {
 
     return SizedBox(
       height: _mediaHeight,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: images.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemBuilder: (_, i) {
-          return GestureDetector(
-                onTap: () => MediaViewer.open(
-                  context,
-                  allMedias,
-                  initialIndex: i,
-                  likeCount: widget.likeCount,
-                  commentCount: widget.commentCount,
-                  repostCount: widget.repostCount,
-                  shareCount: widget.shareCount,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: cardWidth,
-                    height: _mediaHeight,
-                    child: CachedNetworkImage(
-                      imageUrl: images[i].url,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        color: ShadcnColors.secondary,
-                        child: const Center(
-                            child: CupertinoActivityIndicator()),
-                      ),
-                      errorWidget: (_, __, ___) => Container(
-                        color: ShadcnColors.secondary,
-                        child: const Center(
-                          child: Icon(CupertinoIcons.photo,
-                              color: ShadcnColors.mutedForeground, size: 28),
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          scrollbars: false,
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+          },
+        ),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: images.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
+          itemBuilder: (_, i) {
+            return GestureDetector(
+              onTap: () => MediaViewer.open(
+                context,
+                allMedias,
+                initialIndex: i,
+                likeCount: widget.likeCount,
+                commentCount: widget.commentCount,
+                repostCount: widget.repostCount,
+                shareCount: widget.shareCount,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: cardWidth,
+                  height: _mediaHeight,
+                  child: CachedNetworkImage(
+                    imageUrl: images[i].url,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      color: ShadcnColors.secondary,
+                      child: const Center(child: CupertinoActivityIndicator()),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: ShadcnColors.secondary,
+                      child: const Center(
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          color: ShadcnColors.mutedForeground,
+                          size: 28,
                         ),
                       ),
                     ),
                   ),
                 ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
   // ── Video player ──
   Widget _buildVideoPlayer() {
+    if (_videoError != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          height: _mediaHeight,
+          color: ShadcnColors.secondary,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Video Error:\n${_videoError ?? ''}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: ShadcnColors.destructive,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (!_isVideoInitialized || _videoController == null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Container(
+          width: double.infinity,
           height: _mediaHeight,
           color: ShadcnColors.secondary,
           child: const Center(child: CupertinoActivityIndicator()),
@@ -177,40 +229,91 @@ class _MediaCarouselState extends State<MediaCarousel> {
       );
     }
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: _mediaHeight),
+    return VisibilityDetector(
+      key: Key('video_\${widget.medias.first.id}'),
+      onVisibilityChanged: (info) {
+        if (!mounted || _videoController == null || !_isVideoInitialized)
+          return;
+        if (info.visibleFraction >= 0.5) {
+          if (!_videoController!.value.isPlaying) {
+            _videoController!.play();
+          }
+        } else {
+          if (_videoController!.value.isPlaying) {
+            _videoController!.pause();
+          }
+        }
+      },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () {
-            setState(() {
-              _videoController!.value.isPlaying
-                  ? _videoController!.pause()
-                  : _videoController!.play();
-            });
+            // Open MediaViewer instead of toggling play inline
+            MediaViewer.open(
+              context,
+              widget.medias,
+              initialIndex: 0,
+              likeCount: widget.likeCount,
+              commentCount: widget.commentCount,
+              repostCount: widget.repostCount,
+              shareCount: widget.shareCount,
+            );
           },
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              AspectRatio(
-                aspectRatio: _videoController!.value.aspectRatio,
-                child: VideoPlayer(_videoController!),
-              ),
-              if (!_videoController!.value.isPlaying)
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF000000).withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.play_fill,
-                    color: Color(0xFFFFFFFF),
-                    size: 24,
+          child: SizedBox(
+            width: double.infinity,
+            height: _mediaHeight,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black,
+                    child: Center(
+                      child: _videoController!.value.aspectRatio > 0
+                          ? AspectRatio(
+                              aspectRatio: _videoController!.value.aspectRatio,
+                              child: IgnorePointer(
+                                child: VideoPlayer(_videoController!),
+                              ),
+                            )
+                          : const SizedBox(),
+                    ),
                   ),
                 ),
-            ],
+
+                // ── Mute / Unmute Button (Only show this in the feed) ──
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (_videoController!.value.volume == 0) {
+                          _videoController!.setVolume(1.0);
+                        } else {
+                          _videoController!.setVolume(0.0);
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF000000).withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _videoController!.value.volume == 0
+                            ? CupertinoIcons.speaker_slash_fill
+                            : CupertinoIcons.speaker_2_fill,
+                        color: const Color(0xFFFFFFFF),
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

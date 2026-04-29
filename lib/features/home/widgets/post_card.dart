@@ -64,17 +64,10 @@ class PostCard extends StatelessWidget {
           // ── Main content row: Stack for thread line + Row for content ──
           Stack(
             children: [
-              // ── Thread line (positioned absolutely to span the whole height) ──
-              Positioned(
-                left: 16 + (38 / 2) - 0.5, // padding + half avatar - half line
-                top: 14 + 38 + 8, // padding + avatar + gap
-                bottom: 0, // stretch to bottom
-                width: 1.5,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ShadcnColors.border,
-                    borderRadius: BorderRadius.circular(1),
-                  ),
+              // ── Thread line (drawn via CustomPaint to avoid negative height crashes) ──
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _ThreadLinePainter(color: ShadcnColors.border),
                 ),
               ),
 
@@ -315,5 +308,30 @@ class PostCard extends StatelessWidget {
       parts.add('${_formatCount(post.likeCount)} likes');
     }
     return parts.join(' · ');
+  }
+}
+
+class _ThreadLinePainter extends CustomPainter {
+  final Color color;
+
+  _ThreadLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const startY = 14.0 + 38.0 + 8.0; // top padding + avatar height + gap
+    if (size.height <= startY) return;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    const x = 16.0 + (38.0 / 2.0); // left padding + half avatar
+    canvas.drawLine(const Offset(x, startY), Offset(x, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ThreadLinePainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
