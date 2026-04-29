@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -106,17 +108,30 @@ class _MediaViewerState extends State<MediaViewer> {
                 PointerDeviceKind.trackpad,
               },
             ),
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: items.length,
-              onPageChanged: (i) => setState(() => _currentPage = i),
-              itemBuilder: (_, i) {
-                final media = items[i];
+            child: PhotoViewGallery.builder(
+              scrollPhysics: const BouncingScrollPhysics(),
+              builder: (BuildContext context, int index) {
+                final media = items[index];
                 if (media.type == 'video') {
-                  return _VideoViewerPage(media: media);
+                  return PhotoViewGalleryPageOptions.customChild(
+                    child: _VideoViewerPage(media: media),
+                    initialScale: PhotoViewComputedScale.contained,
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 4.0,
+                    heroAttributes: PhotoViewHeroAttributes(tag: media.url),
+                  );
                 }
-                return Center(child: _ZoomableImage(url: media.url));
+                return PhotoViewGalleryPageOptions(
+                  imageProvider: CachedNetworkImageProvider(media.url),
+                  initialScale: PhotoViewComputedScale.contained,
+                  minScale: PhotoViewComputedScale.contained,
+                  maxScale: PhotoViewComputedScale.covered * 4.0,
+                  heroAttributes: PhotoViewHeroAttributes(tag: media.url),
+                );
               },
+              itemCount: items.length,
+              pageController: _pageController,
+              onPageChanged: (i) => setState(() => _currentPage = i),
             ),
           ),
 
@@ -139,6 +154,26 @@ class _MediaViewerState extends State<MediaViewer> {
                       icon: CupertinoIcons.xmark,
                       onTap: () => Navigator.of(context).pop(),
                     ),
+                    
+                    // Page Indicator (e.g., 1 / 3)
+                    if (items.length > 1)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${_currentPage + 1} / ${items.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                      
                     // More
                     _circleButton(icon: CupertinoIcons.ellipsis, onTap: () {}),
                   ],
@@ -556,108 +591,6 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ZoomableImage extends StatefulWidget {
-  final String url;
-  const _ZoomableImage({required this.url});
-
-  @override
-  State<_ZoomableImage> createState() => _ZoomableImageState();
-}
-
-class _ZoomableImageState extends State<_ZoomableImage> {
-  final TransformationController _transformationController =
-      TransformationController();
-  bool _isZoomed = false;
-  Offset? _tapPosition;
-
-  @override
-  void initState() {
-    super.initState();
-    _transformationController.addListener(() {
-      final isZoomed =
-          _transformationController.value.getMaxScaleOnAxis() > 1.01;
-      if (isZoomed != _isZoomed) {
-        setState(() => _isZoomed = isZoomed);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _transformationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final image = CachedNetworkImage(
-      imageUrl: widget.url,
-      fit: BoxFit.contain,
-      placeholder: (_, __) =>
-          const Center(child: CupertinoActivityIndicator(color: Colors.white)),
-      errorWidget: (_, __, ___) => const Center(
-        child: Icon(CupertinoIcons.photo, color: Colors.white38, size: 48),
-      ),
-    );
-
-    return Listener(
-      onPointerSignal: (pointerSignal) {
-        if (pointerSignal is PointerScrollEvent) {
-          if (pointerSignal.scrollDelta.dy < 0 && !_isZoomed) {
-            // Scroll Up -> Zoom In
-            setState(() => _isZoomed = true);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final pos = pointerSignal.localPosition;
-              _transformationController.value = Matrix4.identity()
-                ..translate(-pos.dx, -pos.dy)
-                ..scale(2.0);
-            });
-          } else if (pointerSignal.scrollDelta.dy > 0 && _isZoomed) {
-            // Scroll Down -> Zoom Out
-            final currentScale = _transformationController.value
-                .getMaxScaleOnAxis();
-            if (currentScale <= 1.2) {
-              _transformationController.value = Matrix4.identity();
-              setState(() => _isZoomed = false);
-            } else {
-              _transformationController.value.scale(0.8);
-            }
-          }
-        }
-      },
-      child: GestureDetector(
-        onDoubleTapDown: (details) => _tapPosition = details.localPosition,
-        onDoubleTap: () {
-          if (_isZoomed) {
-            setState(() => _isZoomed = false);
-          } else {
-            setState(() => _isZoomed = true);
-            // Must wait until InteractiveViewer is fully mounted in the tree
-            // before applying the matrix transform, otherwise it overrides it!
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final pos = _tapPosition ?? const Offset(0, 0);
-              // Scale by 2.0 and center on the tap position
-              _transformationController.value = Matrix4.identity()
-                ..translate(-pos.dx, -pos.dy)
-                ..scale(2.0);
-            });
-          }
-        },
-        child: _isZoomed
-            ? InteractiveViewer(
-                transformationController: _transformationController,
-                minScale: 1.0,
-                maxScale: 4.0,
-                panEnabled: true,
-                scaleEnabled: true,
-                child: image,
-              )
-            : image,
       ),
     );
   }
