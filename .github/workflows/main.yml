@@ -1,0 +1,29 @@
+name: Build Flutter iOS
+on:
+  push:
+    branches: [ main ] # Chạy khi bạn push code vào branch main
+  workflow_dispatch: # Cho phép bấm nút chạy thủ công
+
+jobs:
+  build:
+    runs-on: macos-latest # Bắt buộc dùng macOS để build iOS
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build IPA
+        run: flutter build ios --release --no-codesign # Build không cần chứng chỉ trả phí
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphoneos/*.app # Upload thư mục app để bạn đóng gói hoặc dùng tool cài
