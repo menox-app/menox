@@ -19,12 +19,25 @@ class BasePaginationRequest<Params> extends BaseRequest<void> {
   final int? limit;
   final Params? extraParams;
 
-  BasePaginationRequest({this.page, this.limit, this.extraParams})
-    : super(params: {
-        if (page != null) 'page': page,
-        if (limit != null) 'limit': limit,
-        if (extraParams != null) 'extra': extraParams,
-      });
+  BasePaginationRequest({
+    this.page,
+    this.limit,
+    this.extraParams,
+    super.pathParams,
+  }) : super(
+         params: {
+           if (page != null) 'page': page,
+           if (limit != null) 'limit': limit,
+           ..._paginationExtraParamsToMap(extraParams),
+         },
+       );
+}
+
+Map<String, dynamic> _paginationExtraParamsToMap(dynamic extraParams) {
+  if (extraParams == null) return {};
+  if (extraParams is Map<String, dynamic>) return extraParams;
+  if (extraParams is Map) return Map<String, dynamic>.from(extraParams);
+  return {'extra': extraParams};
 }
 
 /// Tương đương: BaseGetByIdRequest & BaseDeleteRequest

@@ -15,7 +15,6 @@ import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
-
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
 
@@ -68,13 +67,17 @@ class LoginScreen extends HookConsumerWidget {
     }
 
     final loginMutation =
-        useMutation<BaseResponse<SignInResponse>, dynamic, SignInBody, void>(
+        useMutation<
+          BaseResponse<SignInResponse>,
+          dynamic,
+          ISignInRequest,
+          void
+        >(
           (input, context) => apiClient.signIn(input),
           onSuccess: (data, variables, onMutateResult, mutationContext) {
-            ref.read(authProvider.notifier).login(
-              data.data.token,
-              data.data.refreshToken,
-            );
+            ref
+                .read(authProvider.notifier)
+                .login(data.data.token, data.data.refreshToken);
           },
 
           onError: (error, variables, onMutateResult, mutationContext) {
@@ -152,13 +155,14 @@ class LoginScreen extends HookConsumerWidget {
                 if (passwordError.value == null &&
                     passwordController.text.isNotEmpty) {
                   loginMutation.mutate(
-                    SignInBody(
-                      email: emailController.text,
-                      password: passwordController.text,
-                      provider: AuthProvider.password,
+                    ISignInRequest(
+                      body: SignInBody(
+                        email: emailController.text,
+                        password: passwordController.text,
+                        provider: AuthProvider.password,
+                      ),
                     ),
                   );
-
                 }
               },
 

@@ -1,10 +1,7 @@
 import 'package:flutter_core/core/apis/app/client/auth.dart';
-import 'package:flutter_core/core/apis/app/client/organizer.dart';
 import 'package:flutter_core/core/apis/app/client/post.dart';
 import 'package:flutter_core/core/apis/base/client/dio_factory.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
-
-export 'package:flutter_core/core/apis/app/client/organizer.dart';
 export 'package:flutter_core/core/apis/app/client/post.dart';
 export 'package:flutter_core/core/apis/app/client/auth.dart';
 
@@ -20,12 +17,10 @@ class AppApi {
   static AppApi get instance => _instance;
 
   final AuthApiClient auth;
-  final OrganizerApiClient organizers;
   final PostApiClient posts;
 
   AppApi._()
       : auth = AuthApiClient(),
-        organizers = OrganizerApiClient(),
         posts = PostApiClient();
 
   /// Gọi 1 lần trong main.dart — khởi tạo DioFactory + AppApi

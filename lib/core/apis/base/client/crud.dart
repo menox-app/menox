@@ -1,17 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_core/core/apis/base/client/client.dart';
-import 'package:flutter_core/core/apis/base/interfaces/serializable.dart';
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
+import 'package:flutter_core/core/apis/base/interfaces/serializable.dart';
 
-/// Base CRUD client — KHÔNG còn resourcePath.
-/// Dio.baseUrl đã chứa resource path (vd: /api/v1/auth).
-/// Tất cả methods dùng relative path: '', '/{id}', '/slug/{slug}'.
 abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
   BaseCrudApiClient(super.client);
 
-  // Bắt buộc lớp con triển khai để parse JSON sang T
   T fromJson(Map<String, dynamic> json);
 
   Future<BaseResponse<T>> create(BaseCreateRequest<T> request) async {
@@ -23,20 +19,7 @@ abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
     BasePaginationRequest request,
   ) async {
     final response = await client.get('', queryParameters: request.params);
-
-    final rawData = response.data;
-    final List<dynamic> list = rawData['data'] ?? [];
-
-    // API returns "success": true (bool), convert to status string
-    final status = rawData['status'] ??
-        (rawData['success'] == true ? 'success' : 'error');
-
-    return BasePaginationResponse<T>(
-      data: list.map((e) => fromJson(e)).toList(),
-      status: status,
-      statusCode: response.statusCode ?? 200,
-      meta: PaginationInfo.fromJson(rawData['meta'] ?? {}),
-    );
+    return mapToPaginationResponse(response);
   }
 
   Future<BaseResponse<T>> getById(BaseGetByIdRequest request) async {
@@ -66,36 +49,72 @@ abstract class BaseCrudApiClient<T extends BaseRecord> extends BaseApiClient {
     );
   }
 
-  // Helper để map dữ liệu trả về từ Dio sang BaseResponse
   BaseResponse<T> mapToResponse(Response response) {
     return mapToCustomResponse<T>(response, fromJson);
   }
 
-  // Helper cho các Custom Method trả về kiểu dữ liệu khác T
+  BasePaginationResponse<T> mapToPaginationResponse(Response response) {
+    return mapToCustomPaginationResponse<T>(response, fromJson);
+  }
+
   BaseResponse<R> mapToCustomResponse<R>(
     Response response,
     R Function(Map<String, dynamic>) mapper,
   ) {
-    final responseData = response.data;
-    final Map<String, dynamic> dataMap = responseData is Map<String, dynamic>
-        ? responseData
-        : {'data': responseData};
+    final dataMap = _responseDataMap(response.data);
 
     return BaseResponse<R>(
-      data: mapper(dataMap['data'] is Map<String, dynamic>
-          ? dataMap['data']
-          : (dataMap['data'] ?? {})),
+      data: mapper(
+        dataMap['data'] is Map<String, dynamic>
+            ? dataMap['data']
+            : (dataMap['data'] ?? {}),
+      ),
       status: dataMap['status'] ?? 'success',
       message: dataMap['message'],
       statusCode: response.statusCode ?? 200,
     );
   }
 
+  BasePaginationResponse<R> mapToCustomPaginationResponse<R>(
+    Response response,
+    R Function(Map<String, dynamic>) mapper,
+  ) {
+    final dataMap = _responseDataMap(response.data);
+    final list = dataMap['data'] is List ? dataMap['data'] as List : [];
 
-  // Helper xử lý body trước khi gửi - Nay đã có BaseSerializable
+    return BasePaginationResponse<R>(
+      data: list
+          .map(_asMap)
+          .whereType<Map<String, dynamic>>()
+          .map(mapper)
+          .toList(),
+      status: _responseStatus(dataMap),
+      message: dataMap['message'],
+      statusCode: response.statusCode ?? 200,
+      meta: PaginationInfo.fromJson(_asMap(dataMap['meta']) ?? {}),
+    );
+  }
+
   dynamic serialize(dynamic body) {
     if (body == null) return null;
     if (body is BaseSerializable) return body.toJson();
     return body;
+  }
+
+  Map<String, dynamic> _responseDataMap(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) return responseData;
+    if (responseData is Map) return Map<String, dynamic>.from(responseData);
+    return {'data': responseData};
+  }
+
+  Map<String, dynamic>? _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
+  String _responseStatus(Map<String, dynamic> dataMap) {
+    return dataMap['status'] ??
+        (dataMap['success'] == true ? 'success' : 'error');
   }
 }

@@ -1,5 +1,9 @@
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'user.g.dart';
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class User extends BaseRecord<String> {
   final String email;
   final String username;
@@ -8,21 +12,17 @@ class User extends BaseRecord<String> {
   final String? bannerUrl;
   final String? bio;
   final String? bioQuote;
-  
-  // Stats
   final int followersCount;
   final int followingCount;
   final int postsCount;
   final String activityLevel;
-  
-  // Tags
   final List<String> tags;
 
   User({
-    required super.id,
-    required this.email,
-    required this.username,
-    required this.displayName,
+    super.id = 'unknown',
+    this.email = '',
+    this.username = '',
+    this.displayName = '',
     this.avatarUrl,
     this.bannerUrl,
     this.bio,
@@ -38,40 +38,12 @@ class User extends BaseRecord<String> {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'] as String? ?? json['_id'] as String? ?? 'unknown',
-      email: json['email'] as String? ?? '',
-      username: json['username'] as String? ?? '',
-      displayName: json['displayName'] as String? ?? '',
-      avatarUrl: json['avatarUrl'] as String?,
-      bannerUrl: json['bannerUrl'] as String?,
-      bio: json['bio'] as String?,
-      bioQuote: json['bioQuote'] as String?,
-      followersCount: json['followersCount'] as int? ?? 0,
-      followingCount: json['followingCount'] as int? ?? 0,
-      postsCount: json['postsCount'] as int? ?? 0,
-      activityLevel: json['activityLevel'] as String? ?? 'Normal',
-      tags: (json['tags'] as List?)?.map((e) => e as String).toList() ?? [],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      extraData: json,
-    );
+    return _$UserFromJson({
+      ...json,
+      'id': json['id'] ?? json['_id'] ?? 'unknown',
+    });
   }
 
   @override
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'email': email,
-    'username': username,
-    'displayName': displayName,
-    'avatarUrl': avatarUrl,
-    'bannerUrl': bannerUrl,
-    'bio': bio,
-    'bioQuote': bioQuote,
-    'followersCount': followersCount,
-    'followingCount': followingCount,
-    'postsCount': postsCount,
-    'activityLevel': activityLevel,
-    'tags': tags,
-  };
+  Map<String, dynamic> toJson() => _$UserToJson(this);
 }

@@ -1,5 +1,9 @@
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'post.g.dart';
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class Author {
   final String? id;
   final String username;
@@ -8,30 +12,17 @@ class Author {
 
   Author({
     this.id,
-    required this.username,
+    this.username = '',
     this.displayName,
     this.avatarUrl,
   });
 
-  factory Author.fromJson(Map<String, dynamic> json) {
-    return Author(
-      id: json['id'],
-      username: json['username'] ?? '',
-      displayName: json['display_name'],
-      avatarUrl: json['avatar_url'],
-    );
-  }
+  factory Author.fromJson(Map<String, dynamic> json) => _$AuthorFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'username': username,
-      'display_name': displayName,
-      'avatar_url': avatarUrl,
-    };
-  }
+  Map<String, dynamic> toJson() => _$AuthorToJson(this);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class Media {
   final String id;
   final String? publicId;
@@ -40,46 +31,33 @@ class Media {
   final String postId;
 
   Media({
-    required this.id,
+    this.id = '',
     this.publicId,
-    required this.url,
-    required this.type,
-    required this.postId,
+    this.url = '',
+    this.type = '',
+    this.postId = '',
   });
 
-  factory Media.fromJson(Map<String, dynamic> json) {
-    return Media(
-      id: json['id'],
-      publicId: json['public_id'],
-      url: json['url'],
-      type: json['type'],
-      postId: json['post_id'],
-    );
-  }
+  factory Media.fromJson(Map<String, dynamic> json) => _$MediaFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'public_id': publicId,
-      'url': url,
-      'type': type,
-      'post_id': postId,
-    };
-  }
+  Map<String, dynamic> toJson() => _$MediaToJson(this);
 }
 
-class Post extends BaseRecord {
+@JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
+class Post extends BaseRecord<String> {
   final String? authorId;
   final String? content;
   final String? visibility;
   final Author? author;
   final List<Media>? medias;
+  @JsonKey(fromJson: _numFromJson)
   final num? likeCount;
+  @JsonKey(fromJson: _boolFromJson)
   final bool? isLiked;
   final bool? isFollowingAuthor;
 
   Post({
-    required super.id,
+    super.id = '',
     super.createdAt,
     super.updatedAt,
     super.extraData,
@@ -94,51 +72,40 @@ class Post extends BaseRecord {
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
-    // Parse like_count — API returns it as a String ("0")
-    num? parsedLikeCount;
-    if (json['like_count'] != null) {
-      parsedLikeCount = json['like_count'] is num
-          ? json['like_count']
-          : num.tryParse(json['like_count'].toString());
-    }
-
-    // Parse is_liked — API returns 0/1 (int) instead of bool
-    bool? parsedIsLiked;
-    if (json['is_liked'] != null) {
-      parsedIsLiked = json['is_liked'] is bool
-          ? json['is_liked']
-          : json['is_liked'] == 1;
-    }
-
-    return Post(
-      id: json['id'],
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : null,
-      authorId: json['author_id'],
-      content: json['content'],
-      visibility: json['visibility'],
-      author: json['author'] != null ? Author.fromJson(json['author']) : null,
-      medias: json['medias'] != null
-          ? (json['medias'] as List).map((e) => Media.fromJson(e)).toList()
-          : null,
-      likeCount: parsedLikeCount,
-      isLiked: parsedIsLiked,
-      isFollowingAuthor: json['is_following_author'],
-      extraData: json,
-    );
+    final post = _$PostFromJson(json);
+    return post._withExtraData(json);
   }
 
   @override
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-      ...extraData,
-    };
+  Map<String, dynamic> toJson() => _$PostToJson(this);
+
+  Post _withExtraData(Map<String, dynamic> extraData) {
+    return Post(
+      id: id,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      extraData: extraData,
+      authorId: authorId,
+      content: content,
+      visibility: visibility,
+      author: author,
+      medias: medias,
+      likeCount: likeCount,
+      isLiked: isLiked,
+      isFollowingAuthor: isFollowingAuthor,
+    );
   }
+}
+
+num? _numFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value;
+  return num.tryParse(value.toString());
+}
+
+bool? _boolFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  return value.toString() == 'true' || value.toString() == '1';
 }

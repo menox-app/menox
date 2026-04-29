@@ -1,7 +1,9 @@
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-// AUTH PROVIDER ENUM
+part 'auth.g.dart';
+
 enum AuthProvider {
   password('password'),
   code('code'),
@@ -13,7 +15,7 @@ enum AuthProvider {
   const AuthProvider(this.value);
 }
 
-// LOGIN INTERFACES
+@JsonSerializable(fieldRename: FieldRename.snake)
 class SignInBody {
   final String email;
   final String password;
@@ -25,51 +27,51 @@ class SignInBody {
     this.provider = AuthProvider.password,
   });
 
-  Map<String, dynamic> toJson() => {
-    'email': email,
-    'password': password,
-    'provider': provider.value,
-  };
+  factory SignInBody.fromJson(Map<String, dynamic> json) =>
+      _$SignInBodyFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SignInBodyToJson(this);
 }
 
 class ISignInRequest extends BaseRequest<SignInBody> {
   ISignInRequest({
     required SignInBody super.body,
     super.params,
-    String? path,
-    String? method,
+    super.pathParams,
   });
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class SignInResponse {
+  @JsonKey(name: 'access_token')
   final String token;
   final String refreshToken;
 
   SignInResponse({required this.token, required this.refreshToken});
 
-  factory SignInResponse.fromJson(Map<String, dynamic> json) {
-    return SignInResponse(
-      token: json['access_token'],
-      refreshToken: json['refresh_token'],
-    );
-  }
+  factory SignInResponse.fromJson(Map<String, dynamic> json) =>
+      _$SignInResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SignInResponseToJson(this);
 }
 
 class ISignInResponse extends BaseResponse<SignInResponse> {
   ISignInResponse({
     required super.data,
     required super.status,
+    super.message,
     required super.statusCode,
   });
 }
 
-// SIGN UP INTERFACES
+@JsonSerializable(fieldRename: FieldRename.snake)
 class SignUpBody {
   final String email;
   final String password;
   final String username;
   final String displayName;
   final String? avatarUrl;
+
   SignUpBody({
     required this.email,
     required this.password,
@@ -78,65 +80,65 @@ class SignUpBody {
     this.avatarUrl,
   });
 
-  Map<String, dynamic> toJson() => {
-    'email': email,
-    'password': password,
-    'username': username,
-    'displayName': displayName,
-    'avatarUrl': avatarUrl,
-  };
+  factory SignUpBody.fromJson(Map<String, dynamic> json) =>
+      _$SignUpBodyFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SignUpBodyToJson(this);
 }
 
 class ISignUpRequest extends BaseRequest<SignUpBody> {
   ISignUpRequest({
     required SignUpBody super.body,
     super.params,
-    String? path,
-    String? method,
+    super.pathParams,
   });
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class SignUpResponse {
+  @JsonKey(name: 'access_token')
   final String token;
   final String refreshToken;
 
   SignUpResponse({required this.token, required this.refreshToken});
 
-  factory SignUpResponse.fromJson(Map<String, dynamic> json) {
-    return SignUpResponse(
-      token: json['access_token'],
-      refreshToken: json['refresh_token'],
-    );
-  }
+  factory SignUpResponse.fromJson(Map<String, dynamic> json) =>
+      _$SignUpResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SignUpResponseToJson(this);
 }
 
 class ISignUpResponse extends BaseResponse<SignUpResponse> {
   ISignUpResponse({
     required super.data,
     required super.status,
+    super.message,
     required super.statusCode,
   });
 }
 
-// REFRESH TOKEN INTERFACES
+@JsonSerializable(fieldRename: FieldRename.snake)
 class RefreshTokenBody {
   final String refreshToken;
 
   RefreshTokenBody({required this.refreshToken});
 
-  Map<String, dynamic> toJson() => {'refreshToken': refreshToken};
+  factory RefreshTokenBody.fromJson(Map<String, dynamic> json) =>
+      _$RefreshTokenBodyFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RefreshTokenBodyToJson(this);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class RefreshTokenResponse {
+  @JsonKey(name: 'access_token')
   final String token;
   final String refreshToken;
 
   RefreshTokenResponse({required this.token, required this.refreshToken});
 
-  factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) {
-    return RefreshTokenResponse(
-      token: json['access_token'],
-      refreshToken: json['refresh_token'],
-    );
-  }
+  factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) =>
+      _$RefreshTokenResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RefreshTokenResponseToJson(this);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_core/core/apis/base/interfaces/serializable.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 typedef BaseBaseKey = String;
 
@@ -9,6 +10,7 @@ abstract class BaseRecord<KeyType> extends BaseSerializable {
   final DateTime? updatedAt;
 
   // Lưu trữ các field động (Record<string, unknown>)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final Map<String, dynamic> extraData;
 
   BaseRecord({

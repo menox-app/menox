@@ -7,17 +7,27 @@ import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 class AuthApiClient extends AppCrudApiClient<BaseRecord> {
   AuthApiClient() : super(resource: "auth");
 
-  Future<BaseResponse<SignInResponse>> signIn(SignInBody body) async {
-    final response = await client.post("/login", data: body.toJson());
+  Future<BaseResponse<SignInResponse>> signIn(ISignInRequest request) async {
+    final response = await client.post(
+      "/login",
+      data: serialize(request.body),
+      queryParameters: request.params,
+    );
     return mapToCustomResponse(response, SignInResponse.fromJson);
   }
 
-  Future<BaseResponse<SignUpResponse>> signUp(SignUpBody body) async {
-    final response = await client.post("/register", data: body.toJson());
+  Future<BaseResponse<SignUpResponse>> signUp(ISignUpRequest request) async {
+    final response = await client.post(
+      "/register",
+      data: serialize(request.body),
+      queryParameters: request.params,
+    );
     return mapToCustomResponse(response, SignUpResponse.fromJson);
   }
 
-  Future<BaseResponse<RefreshTokenResponse>> refreshToken(RefreshTokenBody body) async {
+  Future<BaseResponse<RefreshTokenResponse>> refreshToken(
+    RefreshTokenBody body,
+  ) async {
     final response = await client.post("/refresh", data: body.toJson());
     return mapToCustomResponse(response, RefreshTokenResponse.fromJson);
   }

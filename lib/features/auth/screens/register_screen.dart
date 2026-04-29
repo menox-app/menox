@@ -91,7 +91,12 @@ class RegisterScreen extends HookConsumerWidget {
     final signUpNotifier = ref.read(signUpProvider.notifier);
 
     final signUpMutation =
-        useMutation<BaseResponse<SignUpResponse>, dynamic, SignUpBody, void>(
+        useMutation<
+          BaseResponse<SignUpResponse>,
+          dynamic,
+          ISignUpRequest,
+          void
+        >(
           (input, ctx) => apiClient.signUp(input),
           onSuccess: (data, variables, onMutateResult, mutationContext) {
             ref
@@ -263,12 +268,14 @@ class RegisterScreen extends HookConsumerWidget {
               onContinue: () {
                 final state = ref.read(signUpProvider);
                 signUpMutation.mutate(
-                  SignUpBody(
-                    email: state.email,
-                    password: state.password,
-                    username: state.username,
-                    displayName: state.displayName,
-                    avatarUrl: state.avatar,
+                  ISignUpRequest(
+                    body: SignUpBody(
+                      email: state.email,
+                      password: state.password,
+                      username: state.username,
+                      displayName: state.displayName,
+                      avatarUrl: state.avatar,
+                    ),
                   ),
                 );
               },
