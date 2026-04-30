@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
 import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
 import 'package:flutter_core/features/profile/widgets/profile_widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -17,7 +18,7 @@ class ProfileScreen extends HookConsumerWidget {
     return CupertinoPageScaffold(
       backgroundColor: ShadcnColors.background,
       child: user == null
-          ? const Center(child: CupertinoActivityIndicator())
+          ? const Center(child: AppSpinner())
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/features/home/widgets/media_carousel.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -48,7 +48,7 @@ class PostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final author = post.author;
     final medias = post.medias ?? [];
-    final highlightComments = (post.highlightComments ?? []).take(2).toList();
+    final highlightComments = (post.highlightComments ?? []).take(1).toList();
     final hasMedia = medias.isNotEmpty;
     final hasContent = post.content != null && post.content!.trim().isNotEmpty;
     final hasHighlights = highlightComments.isNotEmpty;
@@ -234,20 +234,13 @@ class PostCard extends StatelessWidget {
         shape: BoxShape.circle,
         color: ShadcnColors.secondary,
         border: Border.all(color: ShadcnColors.border, width: 0.5),
-        image: author?.avatarUrl != null
-            ? DecorationImage(
-                image: CachedNetworkImageProvider(author!.avatarUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
       ),
-      child: author?.avatarUrl == null
-          ? const Icon(
-              CupertinoIcons.person_fill,
-              color: ShadcnColors.mutedForeground,
-              size: 18,
-            )
-          : null,
+      clipBehavior: Clip.antiAlias,
+      child: AppImage.avatar(
+        url: author?.avatarUrl,
+        size: 38,
+        backgroundColor: ShadcnColors.secondary,
+      ),
     );
   }
 

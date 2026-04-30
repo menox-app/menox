@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/app_image.dart';
 
 class ProfileStatItem extends StatelessWidget {
   final String label;
@@ -144,9 +145,10 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
         if (avatarUrl != null)
           Opacity(
             opacity: opacity,
-            child: Image.network(
-              avatarUrl!,
+            child: AppImage(
+              url: avatarUrl,
               fit: BoxFit.cover,
+              backgroundColor: ShadcnColors.secondary,
             ),
           )
         else

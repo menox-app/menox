@@ -1,6 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, link, destructive }
 
@@ -186,15 +186,7 @@ class _AppButtonState extends State<AppButton>
 
     if (widget.isLoading) {
       return Center(
-        child: SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            valueColor: AlwaysStoppedAnimation<Color>(textColor),
-            strokeCap: StrokeCap.round,
-          ),
-        ),
+        child: AppSpinner(size: 20, color: textColor),
       );
     }
 

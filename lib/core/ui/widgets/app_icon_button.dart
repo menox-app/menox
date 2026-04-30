@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
+import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
 
 class AppIconButton extends StatefulWidget {
   final IconData? icon;
@@ -137,7 +137,7 @@ class _AppIconButtonState extends State<AppIconButton>
 
   Color _getSplashColor() {
     final textColor = _getTextColor();
-    return textColor.withOpacity(0.1);
+    return textColor.withValues(alpha: 0.1);
   }
 
   Color _getTextColor() {
@@ -159,11 +159,7 @@ class _AppIconButtonState extends State<AppIconButton>
     final textColor = _getTextColor();
 
     if (widget.isLoading) {
-      return SizedBox(
-        height: 20,
-        width: 20,
-        child: CupertinoActivityIndicator(color: textColor, radius: 10),
-      );
+      return AppSpinner(size: 20, color: textColor);
     }
 
     if (widget.child != null) return widget.child!;

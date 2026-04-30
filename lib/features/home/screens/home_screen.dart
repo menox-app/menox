@@ -9,6 +9,7 @@ import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/assets/app_icons.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
+import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_query/flutter_query.dart';
@@ -164,21 +165,17 @@ class HomeScreen extends HookConsumerWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      image: user?.avatarUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(user!.avatarUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+                      border: Border.all(color: ShadcnColors.border, width: 0.5),
                       color: ShadcnColors.accent,
                     ),
-                    child: user?.avatarUrl == null
-                        ? const Icon(
-                            CupertinoIcons.person,
-                            size: 20,
-                            color: ShadcnColors.accentForeground,
-                          )
-                        : null,
+                    clipBehavior: Clip.antiAlias,
+                    child: AppImage.avatar(
+                      url: user?.avatarUrl,
+                      size: 40,
+                      backgroundColor: ShadcnColors.accent,
+                      errorIcon: CupertinoIcons.person,
+                      errorIconSize: 20,
+                    ),
                   ),
                   // Username
                   Column(

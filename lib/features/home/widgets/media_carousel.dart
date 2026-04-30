@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:flutter_core/features/home/widgets/media_viewer.dart';
@@ -101,23 +102,9 @@ class _MediaCarouselState extends State<MediaCarousel> {
         child: SizedBox(
           width: double.infinity,
           height: _mediaHeight,
-          child: CachedNetworkImage(
-            imageUrl: media.url,
+          child: AppImage(
+            url: media.url,
             fit: BoxFit.cover,
-            placeholder: (_, __) => Container(
-              color: ShadcnColors.secondary,
-              child: const Center(child: CupertinoActivityIndicator()),
-            ),
-            errorWidget: (_, __, ___) => Container(
-              color: ShadcnColors.secondary,
-              child: const Center(
-                child: Icon(
-                  CupertinoIcons.photo,
-                  color: ShadcnColors.mutedForeground,
-                  size: 28,
-                ),
-              ),
-            ),
           ),
         ),
       ),
@@ -164,23 +151,9 @@ class _MediaCarouselState extends State<MediaCarousel> {
                 child: SizedBox(
                   width: cardWidth,
                   height: _mediaHeight,
-                  child: CachedNetworkImage(
-                    imageUrl: images[i].url,
+                  child: AppImage(
+                    url: images[i].url,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
-                      color: ShadcnColors.secondary,
-                      child: const Center(child: CupertinoActivityIndicator()),
-                    ),
-                    errorWidget: (_, __, ___) => Container(
-                      color: ShadcnColors.secondary,
-                      child: const Center(
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          color: ShadcnColors.mutedForeground,
-                          size: 28,
-                        ),
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -224,16 +197,17 @@ class _MediaCarouselState extends State<MediaCarousel> {
           width: double.infinity,
           height: _mediaHeight,
           color: ShadcnColors.secondary,
-          child: const Center(child: CupertinoActivityIndicator()),
+          child: const Center(child: AppSpinner()),
         ),
       );
     }
 
     return VisibilityDetector(
-      key: Key('video_\${widget.medias.first.id}'),
+      key: Key('video_${widget.medias.first.id}'),
       onVisibilityChanged: (info) {
-        if (!mounted || _videoController == null || !_isVideoInitialized)
+        if (!mounted || _videoController == null || !_isVideoInitialized) {
           return;
+        }
         if (info.visibleFraction >= 0.5) {
           if (!_videoController!.value.isPlaying) {
             _videoController!.play();
@@ -299,7 +273,7 @@ class _MediaCarouselState extends State<MediaCarousel> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF000000).withOpacity(0.6),
+                        color: const Color(0xFF000000).withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(

@@ -6,6 +6,7 @@ import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
+import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/ui/widgets/app_text_field.dart';
 import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
 import 'package:flutter_core/features/auth/hooks/signup_provider.dart';
@@ -16,7 +17,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_core/core/constants/avatar_constants.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class RegisterScreen extends HookConsumerWidget {
   const RegisterScreen({super.key});
@@ -299,12 +299,16 @@ class RegisterScreen extends HookConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: ShadcnColors.primary.withOpacity(0.1),
+                              color: ShadcnColors.primary.withValues(
+                                alpha: 0.1,
+                              ),
                               width: 8,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: ShadcnColors.primary.withOpacity(0.05),
+                                color: ShadcnColors.primary.withValues(
+                                  alpha: 0.05,
+                                ),
                                 blurRadius: 20,
                                 spreadRadius: 5,
                               ),
@@ -313,12 +317,11 @@ class RegisterScreen extends HookConsumerWidget {
                           child: ClipOval(
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 300),
-                              child: CachedNetworkImage(
+                              child: AppImage(
                                 key: ValueKey(ref.watch(signUpProvider).avatar),
-                                imageUrl: ref.watch(signUpProvider).avatar,
+                                url: ref.watch(signUpProvider).avatar,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) =>
-                                    Container(color: ShadcnColors.muted),
+                                backgroundColor: ShadcnColors.muted,
                               ),
                             ),
                           ),
@@ -380,9 +383,10 @@ class RegisterScreen extends HookConsumerWidget {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
-                                  child: CachedNetworkImage(
-                                    imageUrl: avatarUrl,
+                                  child: AppImage(
+                                    url: avatarUrl,
                                     fit: BoxFit.cover,
+                                    backgroundColor: ShadcnColors.muted,
                                   ),
                                 ),
                               ),

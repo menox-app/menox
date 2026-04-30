@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
+import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
@@ -229,7 +230,7 @@ class _MediaViewerState extends State<MediaViewer> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: Colors.white, size: 18),
@@ -381,7 +382,7 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
     }
     if (!_initialized) {
       return const Center(
-        child: CupertinoActivityIndicator(color: Colors.white),
+        child: AppSpinner(color: Colors.white),
       );
     }
 
