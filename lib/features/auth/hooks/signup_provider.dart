@@ -70,4 +70,3 @@ final signUpProvider = StateNotifierProvider<SignUpNotifier, SignUpState>((
 ) {
   return SignUpNotifier();
 });
-

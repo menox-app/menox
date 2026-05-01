@@ -41,7 +41,7 @@ class WelcomeScreen extends StatelessWidget {
                   const Text(
                     "Menox",
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: AppFontSizes.largeTitle,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1.2,
                     ),
@@ -54,7 +54,7 @@ class WelcomeScreen extends StatelessWidget {
                 "Live memes from your friends,\non your home screen.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: AppFontSizes.input,
                   fontWeight: FontWeight.w500,
                   color: ShadcnColors.mutedForeground,
                   height: 1.4,

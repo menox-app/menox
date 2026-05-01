@@ -6,12 +6,7 @@ class AppSpinner extends StatelessWidget {
   final Color? color;
   final double lineWidth;
 
-  const AppSpinner({
-    super.key,
-    this.size = 20,
-    this.color,
-    this.lineWidth = 2,
-  });
+  const AppSpinner({super.key, this.size = 20, this.color, this.lineWidth = 2});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +15,7 @@ class AppSpinner extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CupertinoActivityIndicator(
-        color: spinnerColor,
-        radius: size / 2,
-      ),
+      child: CupertinoActivityIndicator(color: spinnerColor, radius: size / 2),
     );
   }
 }

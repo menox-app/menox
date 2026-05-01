@@ -5,6 +5,7 @@ import 'package:flutter_core/core/apis/app/interfaces/user.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
 import 'package:flutter_core/core/ui/widgets/app_bottom_bar.dart';
+import 'package:flutter_core/features/home/widgets/create_post_sheet.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_query/flutter_query.dart';
 import 'package:go_router/go_router.dart';
@@ -23,7 +24,9 @@ class MainScreen extends HookConsumerWidget {
 
     // ✅ Layer 2: Đọc cached user — sync, < 1ms, hiện ngay
     final cachedUserJson = localStorage.getCachedUserJson();
-    final cachedUser = cachedUserJson != null ? User.fromJson(cachedUserJson) : null;
+    final cachedUser = cachedUserJson != null
+        ? User.fromJson(cachedUserJson)
+        : null;
 
     // Bootstrapper: This query runs globally in the shell to keep the Store in sync
     final query = useQuery<User, dynamic>(const ['auth', 'me'], (
@@ -108,51 +111,12 @@ class MainScreen extends HookConsumerWidget {
                     if (index > 2) branchIndex = index - 1;
                     navigationShell.goBranch(branchIndex);
                   },
-                  onCreatePressed: () => _showCreatePostMenu(context),
+                  onCreatePressed: () => showCreatePostSheet(context),
                 ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showCreatePostMenu(BuildContext context) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: const Text('Create New'),
-        message: const Text('Choose what you want to share with the world.'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(CupertinoIcons.photo_on_rectangle),
-                SizedBox(width: 10),
-                Text('Image Post'),
-              ],
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(CupertinoIcons.text_quote),
-                SizedBox(width: 10),
-                Text('Text/Meme Post'),
-              ],
-            ),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          isDefaultAction: true,
-          child: const Text('Cancel'),
-        ),
       ),
     );
   }

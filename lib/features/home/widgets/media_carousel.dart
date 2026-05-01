@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
@@ -9,10 +9,7 @@ import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:flutter_core/features/home/widgets/media_viewer.dart';
 
-/// Renders media for a post (Threads-style):
-/// - Single image → full-width rounded image
-/// - Multiple images → horizontal scroll of rounded cards (peek next image)
-/// - Video → video player with play/pause overlay
+/// Renders media for a post.
 class MediaCarousel extends StatefulWidget {
   final List<Media> medias;
   final num? likeCount;
@@ -85,7 +82,6 @@ class _MediaCarouselState extends State<MediaCarousel> {
     return _buildHorizontalScroll(images, medias);
   }
 
-  // ── Single image ──
   Widget _buildSingleImage(Media media, List<Media> allMedias) {
     return GestureDetector(
       onTap: () => MediaViewer.open(
@@ -102,16 +98,12 @@ class _MediaCarouselState extends State<MediaCarousel> {
         child: SizedBox(
           width: double.infinity,
           height: _mediaHeight,
-          child: AppImage(
-            url: media.url,
-            fit: BoxFit.cover,
-          ),
+          child: AppImage(url: media.url, fit: BoxFit.cover),
         ),
       ),
     );
   }
 
-  // ── Horizontal scroll of image cards (Threads style) ──
   Widget _buildHorizontalScroll(List<Media> images, List<Media> allMedias) {
     // Card width = ~70% of available width so next card peeks
     // Available width = screen width - 16(left pad) - 38(avatar) - 12(gap) - 16(right pad) = width - 82
@@ -151,10 +143,7 @@ class _MediaCarouselState extends State<MediaCarousel> {
                 child: SizedBox(
                   width: cardWidth,
                   height: _mediaHeight,
-                  child: AppImage(
-                    url: images[i].url,
-                    fit: BoxFit.cover,
-                  ),
+                  child: AppImage(url: images[i].url, fit: BoxFit.cover),
                 ),
               ),
             );
@@ -164,7 +153,6 @@ class _MediaCarouselState extends State<MediaCarousel> {
     );
   }
 
-  // ── Video player ──
   Widget _buildVideoPlayer() {
     if (_videoError != null) {
       return ClipRRect(
@@ -181,7 +169,7 @@ class _MediaCarouselState extends State<MediaCarousel> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: ShadcnColors.destructive,
-                  fontSize: 13,
+                  fontSize: AppFontSizes.meta,
                 ),
               ),
             ),
@@ -256,7 +244,6 @@ class _MediaCarouselState extends State<MediaCarousel> {
                   ),
                 ),
 
-                // ── Mute / Unmute Button (Only show this in the feed) ──
                 Positioned(
                   bottom: 12,
                   right: 12,
@@ -278,8 +265,8 @@ class _MediaCarouselState extends State<MediaCarousel> {
                       ),
                       child: Icon(
                         _videoController!.value.volume == 0
-                            ? CupertinoIcons.speaker_slash_fill
-                            : CupertinoIcons.speaker_2_fill,
+                            ? FluentIcons.speaker_mute_24_filled
+                            : FluentIcons.speaker_2_24_filled,
                         color: const Color(0xFFFFFFFF),
                         size: 16,
                       ),

@@ -12,11 +12,7 @@ class MessagesScreen extends StatelessWidget {
         border: null,
         backgroundColor: ShadcnColors.background,
       ),
-      child: SafeArea(
-        child: Center(
-          child: Text('Messages Page Placeholder'),
-        ),
-      ),
+      child: SafeArea(child: Center(child: Text('Messages Page Placeholder'))),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/apis/app/index.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_core/core/ui/assets/app_icons.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/features/home/widgets/create_post_sheet.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_query/flutter_query.dart';
@@ -24,7 +26,6 @@ class HomeScreen extends HookConsumerWidget {
     final apiClient = AppApi.instance;
     final user = useAuth(ref).user;
     final theme = CupertinoTheme.of(context);
-    // ── Infinite Query — page-based pagination ──
     final postsQuery = useInfiniteQuery<List<Post>, dynamic, int>(
       ['posts', 'feed'],
       (context) async {
@@ -36,7 +37,6 @@ class HomeScreen extends HookConsumerWidget {
       },
       initialPageParam: 1,
       nextPageParamBuilder: (data) {
-        // Nếu page cuối trả về ít hơn limit → hết data
         final lastPage = data.pages.last;
         if (lastPage.isEmpty || lastPage.length < 10) return null;
         return data.pages.length + 1;
@@ -47,7 +47,6 @@ class HomeScreen extends HookConsumerWidget {
     final allPosts =
         postsQuery.data?.pages.expand((page) => page).toList() ?? [];
 
-    // ── Inject a dummy video post at the top for testing ──
     final dummyVideoPost = Post(
       id: 'dummy_video_post_1',
       createdAt: DateTime.now(),
@@ -58,7 +57,7 @@ class HomeScreen extends HookConsumerWidget {
         avatarUrl: 'https://i.pravatar.cc/150?u=memox_dev',
       ),
       content:
-          'Here is a test video to see how the video player works in the new Threads-style layout! 🎥✨',
+          'Here is a test video to see how the video player works in the new Threads-style layout.',
       medias: [
         Media(
           id: 'dummy_media_1',
@@ -103,7 +102,6 @@ class HomeScreen extends HookConsumerWidget {
         ? <Post>[]
         : [dummyVideoPost, ...allPosts];
 
-    // ── Scroll Controller for infinite load ──
     final scrollController = useScrollController();
 
     useEffect(
@@ -129,7 +127,7 @@ class HomeScreen extends HookConsumerWidget {
         border: null,
         backgroundColor: ShadcnColors.background,
         leading: AppIconButton(
-          icon: CupertinoIcons.equal,
+          icon: FluentIcons.navigation_24_regular,
           sizeOverride: 32,
           variant: AppButtonVariant.ghost,
           onPressed: () => {},
@@ -140,7 +138,7 @@ class HomeScreen extends HookConsumerWidget {
           child: SvgPicture.asset(AppIcons.appLogo, fit: BoxFit.contain),
         ),
         trailing: AppIconButton(
-          icon: CupertinoIcons.at,
+          icon: FluentIcons.mention_24_regular,
           sizeOverride: 32,
           variant: AppButtonVariant.ghost,
           onPressed: () => {},
@@ -152,54 +150,61 @@ class HomeScreen extends HookConsumerWidget {
           parent: AlwaysScrollableScrollPhysics(),
         ),
         slivers: [
-          // ── Create Post ──
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                spacing: 8,
-                children: [
-                  // Avatar
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: ShadcnColors.border, width: 0.5),
-                      color: ShadcnColors.accent,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: AppImage.avatar(
-                      url: user?.avatarUrl,
-                      size: 40,
-                      backgroundColor: ShadcnColors.accent,
-                      errorIcon: CupertinoIcons.person,
-                      errorIconSize: 20,
-                    ),
-                  ),
-                  // Username
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2.5,
-                    children: [
-                      Text(
-                        user?.username ?? 'No username',
-                        style: theme.textTheme.textStyle.copyWith(
-                          color: ShadcnColors.foreground,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15,
+            child: CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              onPressed: () => showCreatePostSheet(context),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  spacing: 8,
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: ShadcnColors.border,
+                          width: 0.5,
                         ),
+                        color: ShadcnColors.accent,
                       ),
-                      Text(
-                        "What's happening on your mind?",
-                        style: theme.textTheme.textStyle.copyWith(
-                          fontSize: 13,
-                          color: ShadcnColors.mutedForeground,
+                      clipBehavior: Clip.antiAlias,
+                      child: AppImage.avatar(
+                        url: user?.avatarUrl,
+                        size: 40,
+                        backgroundColor: ShadcnColors.accent,
+                        errorIcon: FluentIcons.person_24_regular,
+                        errorIconSize: 20,
+                      ),
+                    ),
+                    // Username
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2.5,
+                      children: [
+                        Text(
+                          user?.username ?? 'No username',
+                          style: theme.textTheme.textStyle.copyWith(
+                            color: ShadcnColors.foreground,
+                            fontWeight: FontWeight.w500,
+                            fontSize: AppFontSizes.body,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Text(
+                          "What's happening on your mind?",
+                          style: theme.textTheme.textStyle.copyWith(
+                            fontSize: AppFontSizes.meta,
+                            color: ShadcnColors.mutedForeground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -209,18 +214,16 @@ class HomeScreen extends HookConsumerWidget {
             child: Divider(height: 1, color: ShadcnColors.border),
           ),
 
-          // ── Pull to Refresh ──
           CupertinoSliverRefreshControl(
             onRefresh: () async {
               await postsQuery.refetch();
             },
           ),
-          // ── Posts List ──
           if (isInitialLoading)
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => const PostCardSkeleton(),
-                childCount: 5,      
+                childCount: 5,
               ),
             )
           else if (displayPosts.isEmpty)
@@ -237,7 +240,7 @@ class HomeScreen extends HookConsumerWidget {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: const Icon(
-                        CupertinoIcons.photo_on_rectangle,
+                        FluentIcons.image_24_regular,
                         size: 28,
                         color: ShadcnColors.mutedForeground,
                       ),
@@ -246,7 +249,7 @@ class HomeScreen extends HookConsumerWidget {
                     Text(
                       'Your feed is empty',
                       style: theme.textTheme.textStyle.copyWith(
-                        fontSize: 15,
+                        fontSize: AppFontSizes.body,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -254,7 +257,7 @@ class HomeScreen extends HookConsumerWidget {
                     Text(
                       'Follow friends to see their memes here.',
                       style: theme.textTheme.textStyle.copyWith(
-                        fontSize: 13,
+                        fontSize: AppFontSizes.meta,
                         color: ShadcnColors.mutedForeground,
                       ),
                     ),
@@ -272,7 +275,6 @@ class HomeScreen extends HookConsumerWidget {
               }, childCount: displayPosts.length),
             ),
 
-          // ── Loading more indicator ──
           if (postsQuery.isFetchingNextPage)
             SliverList(
               delegate: SliverChildBuilderDelegate(
@@ -281,16 +283,15 @@ class HomeScreen extends HookConsumerWidget {
               ),
             ),
 
-          // ── End of feed ──
           if (!postsQuery.hasNextPage && allPosts.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Center(
                   child: Text(
-                    "You're all caught up 🎉",
+                    "You're all caught up",
                     style: theme.textTheme.textStyle.copyWith(
-                      fontSize: 13,
+                      fontSize: AppFontSizes.meta,
                       color: ShadcnColors.mutedForeground,
                     ),
                   ),

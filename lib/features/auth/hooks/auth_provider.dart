@@ -4,7 +4,6 @@ import 'package:flutter_core/main.dart';
 import 'package:flutter_query/flutter_query.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 // ---------------------------------------------------------------------------
 // Auth State
 // ---------------------------------------------------------------------------
@@ -36,11 +35,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final QueryClient _queryClient;
 
   AuthNotifier(this._storage, this._queryClient)
-      : super(AuthState(
+    : super(
+        AuthState(
           status: _storage.getToken() != null
               ? AuthStatus.authenticated
               : AuthStatus.unauthenticated,
-        )) {
+        ),
+      ) {
     // Đăng ký callback — khi DioFactory refresh fail → tự logout
     DioFactory.onAuthFailure = _handleAuthFailure;
 
@@ -80,7 +81,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       refreshToken: refreshToken,
     );
     state = const AuthState(status: AuthStatus.authenticated);
-    
+
     // Invalidate profile query to trigger fresh fetch
     _queryClient.invalidateQueries(
       queryKey: ['auth', 'me'],
@@ -92,12 +93,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _storage.clearAll();
     state = const AuthState(status: AuthStatus.unauthenticated);
-    
+
     // Clear the user cache on logout
-    _queryClient.removeQueries(
-      queryKey: ['auth', 'me'],
-      exact: true,
-    );
+    _queryClient.removeQueries(queryKey: ['auth', 'me'], exact: true);
   }
 }
 

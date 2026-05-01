@@ -12,11 +12,7 @@ class ActivityScreen extends StatelessWidget {
         border: null,
         backgroundColor: ShadcnColors.background,
       ),
-      child: SafeArea(
-        child: Center(
-          child: Text('Activity Page Placeholder'),
-        ),
-      ),
+      child: SafeArea(child: Center(child: Text('Activity Page Placeholder'))),
     );
   }
 }

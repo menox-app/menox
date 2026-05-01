@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
@@ -104,7 +105,7 @@ class LoginScreen extends HookConsumerWidget {
         leading: AppIconButton(
           size: AppButtonSize.sm,
           variant: AppButtonVariant.secondary,
-          icon: CupertinoIcons.back,
+          icon: FluentIcons.arrow_left_24_regular,
           onPressed: previousStep,
         ),
       ),
@@ -127,7 +128,7 @@ class LoginScreen extends HookConsumerWidget {
                   AppTextField(
                     hintText: "Email address",
                     controller: emailController,
-                    prefixIcon: CupertinoIcons.mail,
+                    prefixIcon: FluentIcons.mail_24_regular,
                     keyboardType: TextInputType.emailAddress,
                     autofocus: true,
                     errorText: emailError.value,
@@ -173,7 +174,7 @@ class LoginScreen extends HookConsumerWidget {
                   AppTextField(
                     hintText: "Password",
                     controller: passwordController,
-                    prefixIcon: CupertinoIcons.lock,
+                    prefixIcon: FluentIcons.lock_closed_24_regular,
                     isPassword: true,
                     autofocus: true,
                     errorText: passwordError.value,
@@ -195,7 +196,7 @@ class LoginScreen extends HookConsumerWidget {
       textAlign: TextAlign.center,
       text: TextSpan(
         style: theme.textTheme.textStyle.copyWith(
-          fontSize: 13,
+          fontSize: AppFontSizes.meta,
           color: ShadcnColors.mutedForeground,
         ),
         children: [
@@ -247,7 +248,7 @@ class _LoginStepLayout extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.navLargeTitleTextStyle.copyWith(
-              fontSize: 28,
+              fontSize: AppFontSizes.largeTitle,
               fontWeight: FontWeight.w700,
             ),
             textAlign: TextAlign.center,
@@ -260,7 +261,7 @@ class _LoginStepLayout extends StatelessWidget {
               textAlign: TextAlign.center,
               text: TextSpan(
                 style: theme.textTheme.textStyle.copyWith(
-                  fontSize: 13,
+                  fontSize: AppFontSizes.meta,
                   color: ShadcnColors.mutedForeground,
                 ),
                 children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
@@ -49,7 +50,7 @@ class ProfileScreen extends HookConsumerWidget {
                                   Text(
                                     user.displayName,
                                     style: const TextStyle(
-                                      fontSize: 32,
+                                      fontSize: AppFontSizes.largeTitle,
                                       fontWeight: FontWeight.w800,
                                       height: 1.1,
                                       letterSpacing: -1,
@@ -59,7 +60,7 @@ class ProfileScreen extends HookConsumerWidget {
                                   Text(
                                     '@${user.username}',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: AppFontSizes.body,
                                       color: ShadcnColors.mutedForeground
                                           .withValues(alpha: 0.8),
                                     ),
@@ -76,7 +77,7 @@ class ProfileScreen extends HookConsumerWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                CupertinoIcons.infinite,
+                                FluentIcons.math_symbols_24_regular,
                                 size: 20,
                                 color: ShadcnColors.mutedForeground,
                               ),
@@ -118,7 +119,7 @@ class ProfileScreen extends HookConsumerWidget {
                           Text(
                             '"${user.bioQuote}"',
                             style: const TextStyle(
-                              fontSize: 22,
+                              fontSize: AppFontSizes.title,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.5,
                             ),
@@ -130,7 +131,7 @@ class ProfileScreen extends HookConsumerWidget {
                           Text(
                             user.bio!,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: AppFontSizes.body,
                               color: ShadcnColors.mutedForeground.withValues(
                                 alpha: 0.9,
                               ),

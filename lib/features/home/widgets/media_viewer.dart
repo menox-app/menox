@@ -1,19 +1,18 @@
-import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
+import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
-/// Fullscreen Threads-style media viewer:
+/// Fullscreen media viewer.
 /// - Swipe left/right between images
 /// - Pinch-to-zoom
-/// - Close (X) button top-left, more (···) button top-right
-/// - Action bar at bottom: ♡ 💬 🔄 ▷ with counts
 class MediaViewer extends StatefulWidget {
   final List<Media> medias;
   final int initialIndex;
@@ -100,7 +99,6 @@ class _MediaViewerState extends State<MediaViewer> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ── Swipeable fullscreen items ──
           ScrollConfiguration(
             behavior: ScrollConfiguration.of(context).copyWith(
               dragDevices: {
@@ -136,7 +134,6 @@ class _MediaViewerState extends State<MediaViewer> {
             ),
           ),
 
-          // ── Top bar: close + more ──
           Positioned(
             top: 0,
             left: 0,
@@ -152,14 +149,17 @@ class _MediaViewerState extends State<MediaViewer> {
                   children: [
                     // Close
                     _circleButton(
-                      icon: CupertinoIcons.xmark,
+                      icon: FluentIcons.dismiss_24_regular,
                       onTap: () => Navigator.of(context).pop(),
                     ),
-                    
+
                     // Page Indicator (e.g., 1 / 3)
                     if (items.length > 1)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
@@ -168,22 +168,24 @@ class _MediaViewerState extends State<MediaViewer> {
                           '${_currentPage + 1} / ${items.length}',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: AppFontSizes.bodySmall,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1,
                           ),
                         ),
                       ),
-                      
+
                     // More
-                    _circleButton(icon: CupertinoIcons.ellipsis, onTap: () {}),
+                    _circleButton(
+                      icon: FluentIcons.more_horizontal_24_regular,
+                      onTap: () {},
+                    ),
                   ],
                 ),
               ),
             ),
           ),
 
-          // ── Bottom action bar ──
           Positioned(
             bottom: 0,
             left: 0,
@@ -198,19 +200,19 @@ class _MediaViewerState extends State<MediaViewer> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _actionItem(
-                      icon: CupertinoIcons.heart,
+                      icon: FluentIcons.heart_24_regular,
                       count: widget.likeCount,
                     ),
                     _actionItem(
-                      icon: CupertinoIcons.chat_bubble,
+                      icon: FluentIcons.chat_24_regular,
                       count: widget.commentCount,
                     ),
                     _actionItem(
-                      icon: CupertinoIcons.arrow_2_squarepath,
+                      icon: FluentIcons.arrow_repeat_all_24_regular,
                       count: widget.repostCount,
                     ),
                     _actionItem(
-                      icon: CupertinoIcons.paperplane,
+                      icon: FluentIcons.send_24_regular,
                       count: widget.shareCount,
                     ),
                   ],
@@ -250,7 +252,7 @@ class _MediaViewerState extends State<MediaViewer> {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 13,
+              fontSize: AppFontSizes.meta,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -278,7 +280,7 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
   bool _isScrubbing = false;
   bool _showCenterIcon = false;
   bool _isFullscreen = false;
-  IconData _centerIcon = CupertinoIcons.play_fill;
+  IconData _centerIcon = FluentIcons.play_24_filled;
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -324,11 +326,11 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
       if (_controller.value.isPlaying) {
         _controller.pause();
         _showControls = true;
-        _centerIcon = CupertinoIcons.pause_fill;
+        _centerIcon = FluentIcons.pause_24_filled;
       } else {
         _controller.play();
         _startHideTimer();
-        _centerIcon = CupertinoIcons.play_fill;
+        _centerIcon = FluentIcons.play_24_filled;
       }
 
       // Briefly show center icon
@@ -381,9 +383,7 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
       );
     }
     if (!_initialized) {
-      return const Center(
-        child: AppSpinner(color: Colors.white),
-      );
+      return const Center(child: AppSpinner(color: Colors.white));
     }
 
     final duration = _controller.value.duration.inMilliseconds.toDouble();
@@ -400,7 +400,6 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
       },
       child: Stack(
         children: [
-          // ── Video ──
           Center(
             child: SizedBox.expand(
               child: FittedBox(
@@ -418,7 +417,6 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
             ),
           ),
 
-          // ── Center Bottom Fullscreen Pill (Only for Landscape Videos) ──
           if (_controller.value.size.width > _controller.value.size.height)
             Positioned(
               bottom: 150, // Floating above the bottom controls
@@ -448,17 +446,17 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
                         children: [
                           Icon(
                             _isFullscreen
-                                ? CupertinoIcons.arrow_down_right_arrow_up_left
-                                : CupertinoIcons.viewfinder,
+                                ? FluentIcons.full_screen_minimize_24_regular
+                                : FluentIcons.full_screen_maximize_24_regular,
                             color: Colors.white,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình',
+                            _isFullscreen ? 'Exit full screen' : 'Full screen',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: AppFontSizes.meta,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -470,7 +468,6 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
               ),
             ),
 
-          // ── Fading Center Icon ──
           Center(
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 300),
@@ -486,7 +483,6 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
             ),
           ),
 
-          // ── TikTok Style Bottom Controls ──
           Positioned(
             bottom: 80, // Above engagement bar
             left: 0,
@@ -521,8 +517,8 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
                             ),
                             child: Icon(
                               _controller.value.volume == 0
-                                  ? CupertinoIcons.speaker_slash_fill
-                                  : CupertinoIcons.speaker_2_fill,
+                                  ? FluentIcons.speaker_mute_24_filled
+                                  : FluentIcons.speaker_2_24_filled,
                               color: Colors.white,
                               size: 16,
                             ),
@@ -543,7 +539,7 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
                           '${_formatDuration(_controller.value.position)} / ${_formatDuration(_controller.value.duration)}',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: AppFontSizes.caption,
                             fontWeight: FontWeight.w500,
                             shadows: [
                               Shadow(color: Colors.black54, blurRadius: 2),

@@ -30,10 +30,7 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
   final queryClient = QueryClient();
 
   // Khởi tạo API SDK
-  AppApi.initialize(
-    baseUrl: flavorConfig.baseUrl,
-    localStorage: localStorage,
-  );
+  AppApi.initialize(baseUrl: flavorConfig.baseUrl, localStorage: localStorage);
 
   runApp(
     ProviderScope(

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 
 class AppTextField extends StatefulWidget {
@@ -72,7 +73,7 @@ class _AppTextFieldState extends State<AppTextField> {
           placeholder: widget.hintText,
           placeholderStyle: const TextStyle(
             color: ShadcnColors.mutedForeground,
-            fontSize: 17,
+            fontSize: AppFontSizes.input,
             letterSpacing: -0.4,
           ),
           obscureText: _obscureText,
@@ -110,8 +111,8 @@ class _AppTextFieldState extends State<AppTextField> {
                       minimumSize: const Size(0, 0),
                       child: Icon(
                         _obscureText
-                            ? CupertinoIcons.eye_slash
-                            : CupertinoIcons.eye,
+                            ? FluentIcons.eye_off_24_regular
+                            : FluentIcons.eye_24_regular,
                         size: 20,
                         color: ShadcnColors.mutedForeground,
                       ),
@@ -119,7 +120,7 @@ class _AppTextFieldState extends State<AppTextField> {
                   : null),
           style: const TextStyle(
             color: ShadcnColors.foreground,
-            fontSize: 16,
+            fontSize: AppFontSizes.input,
             letterSpacing: -0.4,
           ),
           cursorColor: ShadcnColors.primary,
@@ -155,7 +156,7 @@ class _AppTextFieldState extends State<AppTextField> {
                       widget.errorText!,
                       style: const TextStyle(
                         color: ShadcnColors.destructive,
-                        fontSize: 12,
+                        fontSize: AppFontSizes.caption,
                         fontWeight: FontWeight.w400,
                       ),
                     ),

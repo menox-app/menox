@@ -55,5 +55,5 @@ class BasePaginationResponse<T> extends BaseResponse<List<T>> {
   });
 }
 
-// Các loại response khác bạn chỉ cần dùng BaseResponse<T> là đủ 
+// Các loại response khác bạn chỉ cần dùng BaseResponse<T> là đủ
 // Ví dụ: BaseResponse<User> tương đương BaseGetByIdResponse<User>

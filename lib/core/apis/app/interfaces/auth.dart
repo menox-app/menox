@@ -1,5 +1,6 @@
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
+import 'package:flutter_core/core/apis/base/interfaces/serializable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'auth.g.dart';
@@ -16,7 +17,7 @@ enum AuthProvider {
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class SignInBody {
+class SignInBody implements BaseSerializable {
   final String email;
   final String password;
   final AuthProvider provider;
@@ -30,6 +31,7 @@ class SignInBody {
   factory SignInBody.fromJson(Map<String, dynamic> json) =>
       _$SignInBodyFromJson(json);
 
+  @override
   Map<String, dynamic> toJson() => _$SignInBodyToJson(this);
 }
 
@@ -65,7 +67,7 @@ class ISignInResponse extends BaseResponse<SignInResponse> {
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class SignUpBody {
+class SignUpBody implements BaseSerializable {
   final String email;
   final String password;
   final String username;
@@ -83,6 +85,7 @@ class SignUpBody {
   factory SignUpBody.fromJson(Map<String, dynamic> json) =>
       _$SignUpBodyFromJson(json);
 
+  @override
   Map<String, dynamic> toJson() => _$SignUpBodyToJson(this);
 }
 
@@ -118,7 +121,7 @@ class ISignUpResponse extends BaseResponse<SignUpResponse> {
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class RefreshTokenBody {
+class RefreshTokenBody implements BaseSerializable {
   final String refreshToken;
 
   RefreshTokenBody({required this.refreshToken});
@@ -126,6 +129,7 @@ class RefreshTokenBody {
   factory RefreshTokenBody.fromJson(Map<String, dynamic> json) =>
       _$RefreshTokenBodyFromJson(json);
 
+  @override
   Map<String, dynamic> toJson() => _$RefreshTokenBodyToJson(this);
 }
 

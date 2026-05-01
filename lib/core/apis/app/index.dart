@@ -19,9 +19,7 @@ class AppApi {
   final AuthApiClient auth;
   final PostApiClient posts;
 
-  AppApi._()
-      : auth = AuthApiClient(),
-        posts = PostApiClient();
+  AppApi._() : auth = AuthApiClient(), posts = PostApiClient();
 
   /// Gọi 1 lần trong main.dart — khởi tạo DioFactory + AppApi
   static void initialize({

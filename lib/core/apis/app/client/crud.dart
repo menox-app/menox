@@ -14,5 +14,5 @@ import 'package:flutter_core/core/apis/base/interfaces/record.dart';
 abstract class AppCrudApiClient<T extends BaseRecord>
     extends BaseCrudApiClient<T> {
   AppCrudApiClient({required String resource})
-      : super(DioFactory.instance.create(resource));
+    : super(DioFactory.instance.create(resource));
 }

@@ -1,3 +1,4 @@
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
@@ -7,16 +8,6 @@ import 'package:flutter_core/features/home/widgets/media_carousel.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Threads-style post card:
-/// ┌──────────────────────────────────────┐
-/// │ [Avatar]  username · 6h          ··· │
-/// │    │      Content text ...            │
-/// │    │      ┌────────────────────┐      │
-/// │    │      │   Media carousel   │      │
-/// │    │      └────────────────────┘      │
-/// │    │      ♡  💬  🔄  ▷              │
-/// │    │      57.1K · 646 · 2.1K · 3.1K  │
-/// │ ───┼──────────────────────────────── │
-/// └──────────────────────────────────────┘
 class PostCard extends StatelessWidget {
   final Post post;
 
@@ -57,10 +48,8 @@ class PostCard extends StatelessWidget {
       color: ShadcnColors.background,
       child: Column(
         children: [
-          // ── Main content row: Stack for thread line + Row for content ──
           Stack(
             children: [
-              // ── Thread line (drawn via CustomPaint to avoid negative height crashes) ──
               if (hasHighlights)
                 Positioned.fill(
                   child: CustomPaint(
@@ -68,31 +57,25 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
 
-              // ── Content ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Left column: Avatar ──
                     Column(children: [_buildAvatar(author)]),
                     const SizedBox(width: 12),
 
-                    // ── Right column: Header + Content + Media + Actions ──
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── Header: username · time · more ──
                           _buildHeader(author),
 
-                          // ── Content ──
                           if (hasContent) ...[
                             const SizedBox(height: 4),
                             _buildContent(),
                           ],
 
-                          // ── Media ──
                           if (hasMedia) ...[
                             const SizedBox(height: 10),
                             MediaCarousel(
@@ -104,11 +87,9 @@ class PostCard extends StatelessWidget {
                             ),
                           ],
 
-                          // ── Action bar ──
                           const SizedBox(height: 6),
                           _buildActionBar(),
 
-                          // ── Engagement counts ──
                           SizedBox(height: hasHighlights ? 6 : 10),
                         ],
                       ),
@@ -119,7 +100,6 @@ class PostCard extends StatelessWidget {
             ],
           ),
 
-          // ── Bottom divider ──
           if (hasHighlights) _buildHighlightComments(highlightComments),
 
           Container(height: 0.5, color: ShadcnColors.border),
@@ -128,7 +108,6 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  // ── Avatar ──
   Widget _buildHighlightComments(List<Comment> comments) {
     return Column(
       children: [
@@ -183,7 +162,7 @@ class PostCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSizes.bodySmall,
                             fontWeight: FontWeight.w600,
                             color: ShadcnColors.foreground,
                           ),
@@ -194,7 +173,7 @@ class PostCard extends StatelessWidget {
                         Text(
                           _timeAgo(comment.createdAt),
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSizes.meta,
                             color: ShadcnColors.mutedForeground,
                           ),
                         ),
@@ -209,7 +188,7 @@ class PostCard extends StatelessWidget {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSizes.bodySmall,
                           height: 1.4,
                           color: ShadcnColors.foreground,
                         ),
@@ -244,7 +223,6 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  // ── Header row ──
   Widget _buildHeader(Author? author) {
     return Row(
       children: [
@@ -256,7 +234,7 @@ class PostCard extends StatelessWidget {
                 child: Text(
                   author?.displayName ?? author?.username ?? 'Unknown',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: AppFontSizes.bodySmall,
                     fontWeight: FontWeight.w600,
                     color: ShadcnColors.foreground,
                     letterSpacing: -0.2,
@@ -269,7 +247,7 @@ class PostCard extends StatelessWidget {
               Text(
                 _timeAgo(post.createdAt),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSizes.meta,
                   color: ShadcnColors.mutedForeground,
                 ),
               ),
@@ -282,7 +260,7 @@ class PostCard extends StatelessWidget {
           child: const Padding(
             padding: EdgeInsets.only(left: 8),
             child: Icon(
-              CupertinoIcons.ellipsis,
+              FluentIcons.more_horizontal_24_regular,
               color: ShadcnColors.mutedForeground,
               size: 16,
             ),
@@ -292,12 +270,11 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  // ── Content text ──
   Widget _buildContent() {
     return Text(
       post.content!,
       style: const TextStyle(
-        fontSize: 14,
+        fontSize: AppFontSizes.bodySmall,
         height: 1.45,
         color: ShadcnColors.foreground,
         letterSpacing: -0.1,
@@ -307,16 +284,16 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  // ── Action bar ──
   Widget _buildActionBar() {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
+        spacing: 6,
         children: [
           _actionButton(
             icon: post.isLiked == true
-                ? CupertinoIcons.heart_fill
-                : CupertinoIcons.heart,
+                ? FluentIcons.heart_24_filled
+                : FluentIcons.heart_24_regular,
             color: post.isLiked == true
                 ? CupertinoColors.systemRed
                 : ShadcnColors.foreground,
@@ -324,19 +301,19 @@ class PostCard extends StatelessWidget {
             onTap: () {},
           ),
           _actionButton(
-            icon: CupertinoIcons.chat_bubble,
+            icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: post.commentCount,
             onTap: () {},
           ),
           _actionButton(
-            icon: CupertinoIcons.arrow_2_squarepath,
+            icon: FluentIcons.arrow_sync_24_regular,
             color: ShadcnColors.foreground,
             count: post.repostCount,
             onTap: () {},
           ),
           _actionButton(
-            icon: CupertinoIcons.paperplane,
+            icon: FluentIcons.send_24_regular,
             color: ShadcnColors.foreground,
             count: post.shareCount,
             onTap: () {},
@@ -352,13 +329,13 @@ class PostCard extends StatelessWidget {
       child: Row(
         children: [
           _actionButton(
-            icon: CupertinoIcons.heart,
+            icon: FluentIcons.heart_24_regular,
             color: ShadcnColors.foreground,
             count: comment.likeCount,
             onTap: () {},
           ),
           _actionButton(
-            icon: CupertinoIcons.chat_bubble,
+            icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: comment.replyCount,
             onTap: () {},
@@ -382,13 +359,13 @@ class PostCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 19, color: color),
+            Icon(icon, size: 18, color: color),
             if (count != null && count > 0) ...[
               const SizedBox(width: 4),
               Text(
                 _formatCount(count),
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppFontSizes.caption,
                   color: color,
                   fontWeight: FontWeight.w400,
                 ),

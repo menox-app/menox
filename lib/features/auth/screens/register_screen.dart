@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
@@ -128,7 +129,7 @@ class RegisterScreen extends HookConsumerWidget {
         leading: AppIconButton(
           size: AppButtonSize.sm,
           variant: AppButtonVariant.secondary,
-          icon: CupertinoIcons.back,
+          icon: FluentIcons.arrow_left_24_regular,
           onPressed: previousStep,
         ),
       ),
@@ -155,7 +156,7 @@ class RegisterScreen extends HookConsumerWidget {
               child: AppTextField(
                 hintText: "Email address",
                 controller: emailController,
-                prefixIcon: CupertinoIcons.mail,
+                prefixIcon: FluentIcons.mail_24_regular,
                 keyboardType: TextInputType.emailAddress,
                 autofocus: true,
                 errorText: emailError.value,
@@ -183,7 +184,7 @@ class RegisterScreen extends HookConsumerWidget {
                     hintText: "Password",
                     controller: passwordController,
                     isPassword: true,
-                    prefixIcon: CupertinoIcons.lock,
+                    prefixIcon: FluentIcons.lock_closed_24_regular,
                     autofocus: true,
                     errorText: passwordError.value,
                     onChanged: validatePassword,
@@ -219,7 +220,7 @@ class RegisterScreen extends HookConsumerWidget {
                   AppTextField(
                     hintText: "First Name",
                     controller: firstNameController,
-                    prefixIcon: CupertinoIcons.person,
+                    prefixIcon: FluentIcons.person_24_regular,
                     autofocus: true,
                     onChanged: (_) => validateName(),
                   ),
@@ -227,7 +228,7 @@ class RegisterScreen extends HookConsumerWidget {
                   AppTextField(
                     hintText: "Last Name",
                     controller: lastNameController,
-                    prefixIcon: CupertinoIcons.person,
+                    prefixIcon: FluentIcons.person_24_regular,
                     onChanged: (_) => validateName(),
                     errorText: nameError.value,
                   ),
@@ -252,7 +253,7 @@ class RegisterScreen extends HookConsumerWidget {
               child: AppTextField(
                 hintText: "Username",
                 controller: usernameController,
-                prefixIcon: CupertinoIcons.at,
+                prefixIcon: FluentIcons.mention_24_regular,
                 autofocus: true,
                 errorText: usernameError.value,
                 onChanged: validateUsername,
@@ -285,7 +286,7 @@ class RegisterScreen extends HookConsumerWidget {
                     "Choose one to get started",
                     style: theme.textTheme.textStyle.copyWith(
                       color: ShadcnColors.mutedForeground,
-                      fontSize: 16,
+                      fontSize: AppFontSizes.input,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -330,7 +331,7 @@ class RegisterScreen extends HookConsumerWidget {
                           bottom: 0,
                           right: 0,
                           child: AppIconButton(
-                            icon: CupertinoIcons.camera_fill,
+                            icon: FluentIcons.camera_24_regular,
                             variant: AppButtonVariant.secondary,
                             onPressed: () async {
                               final picker = ImagePicker();
@@ -401,7 +402,7 @@ class RegisterScreen extends HookConsumerWidget {
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
-                                      CupertinoIcons.check_mark,
+                                      FluentIcons.checkmark_24_regular,
                                       color: ShadcnColors.primaryForeground,
                                       size: 12,
                                     ),
@@ -428,7 +429,7 @@ class RegisterScreen extends HookConsumerWidget {
       textAlign: TextAlign.center,
       text: TextSpan(
         style: theme.textTheme.textStyle.copyWith(
-          fontSize: 13,
+          fontSize: AppFontSizes.meta,
           color: ShadcnColors.mutedForeground,
         ),
         children: [
@@ -477,7 +478,7 @@ class _RegisterStepLayout extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.navLargeTitleTextStyle.copyWith(
-              fontSize: 28,
+              fontSize: AppFontSizes.largeTitle,
               fontWeight: FontWeight.w700,
             ),
             textAlign: TextAlign.center,

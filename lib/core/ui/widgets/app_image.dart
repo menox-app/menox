@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -27,7 +28,7 @@ class AppImage extends StatelessWidget {
     this.placeholder,
     this.errorWidget,
     this.backgroundColor = ShadcnColors.secondary,
-    this.errorIcon = CupertinoIcons.photo,
+    this.errorIcon = FluentIcons.image_24_regular,
     this.errorIconSize = 28,
   });
 
@@ -38,7 +39,7 @@ class AppImage extends StatelessWidget {
     this.placeholder,
     this.errorWidget,
     this.backgroundColor = ShadcnColors.secondary,
-    this.errorIcon = CupertinoIcons.person_fill,
+    this.errorIcon = FluentIcons.person_24_regular,
     this.errorIconSize = 18,
   }) : width = size,
        height = size,

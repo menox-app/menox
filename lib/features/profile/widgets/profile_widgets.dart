@@ -6,11 +6,7 @@ class ProfileStatItem extends StatelessWidget {
   final String label;
   final String value;
 
-  const ProfileStatItem({
-    super.key,
-    required this.label,
-    required this.value,
-  });
+  const ProfileStatItem({super.key, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +15,7 @@ class ProfileStatItem extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.w800,
             color: ShadcnColors.foreground,
             letterSpacing: -0.5,
@@ -29,7 +25,7 @@ class ProfileStatItem extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: AppFontSizes.caption,
             fontWeight: FontWeight.w500,
             color: ShadcnColors.mutedForeground.withValues(alpha: 0.8),
           ),
@@ -59,7 +55,7 @@ class ProfileTagChip extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: AppFontSizes.meta,
           fontWeight: FontWeight.w500,
           color: ShadcnColors.mutedForeground,
         ),
@@ -108,7 +104,7 @@ class PremiumGradientButton extends StatelessWidget {
             text.toUpperCase(),
             style: const TextStyle(
               color: CupertinoColors.white,
-              fontSize: 16,
+              fontSize: AppFontSizes.input,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
             ),

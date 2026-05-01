@@ -25,15 +25,15 @@ class DioFactory {
   /// Dio riêng chỉ để gọi refresh token — KHÔNG gắn auth interceptor (tránh loop)
   late final Dio _refreshDio;
 
-  DioFactory._({
-    required this.apiBaseUrl,
-    required LocalStorage localStorage,
-  }) : _localStorage = localStorage {
-    _refreshDio = Dio(BaseOptions(
-      baseUrl: '$apiBaseUrl/auth',
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-    ));
+  DioFactory._({required this.apiBaseUrl, required LocalStorage localStorage})
+    : _localStorage = localStorage {
+    _refreshDio = Dio(
+      BaseOptions(
+        baseUrl: '$apiBaseUrl/auth',
+        connectTimeout: AppConfig.connectTimeout,
+        receiveTimeout: AppConfig.receiveTimeout,
+      ),
+    );
     // Response interceptor cho refresh Dio
     _refreshDio.interceptors.add(_responseInterceptor());
   }
@@ -55,16 +55,15 @@ class DioFactory {
 
   /// Tạo Dio instance cho 1 resource — đã gắn đầy đủ interceptors
   Dio create(String resource) {
-    final dio = Dio(BaseOptions(
-      baseUrl: '$apiBaseUrl/$resource',
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-    ));
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: '$apiBaseUrl/$resource',
+        connectTimeout: AppConfig.connectTimeout,
+        receiveTimeout: AppConfig.receiveTimeout,
+      ),
+    );
 
-    dio.interceptors.addAll([
-      _authInterceptor(dio),
-      _responseInterceptor(),
-    ]);
+    dio.interceptors.addAll([_authInterceptor(dio), _responseInterceptor()]);
 
     return dio;
   }

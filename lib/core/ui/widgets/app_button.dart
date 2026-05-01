@@ -185,9 +185,7 @@ class _AppButtonState extends State<AppButton>
     final textColor = _getTextColor();
 
     if (widget.isLoading) {
-      return Center(
-        child: AppSpinner(size: 20, color: textColor),
-      );
+      return Center(child: AppSpinner(size: 20, color: textColor));
     }
 
     double fontSize;
@@ -195,23 +193,23 @@ class _AppButtonState extends State<AppButton>
 
     switch (widget.size) {
       case AppButtonSize.xs:
-        fontSize = 13;
+        fontSize = AppFontSizes.meta;
         iconSize = 14;
         break;
       case AppButtonSize.sm:
-        fontSize = 14;
+        fontSize = AppFontSizes.bodySmall;
         iconSize = 16;
         break;
       case AppButtonSize.md:
-        fontSize = 15;
+        fontSize = AppFontSizes.body;
         iconSize = 18;
         break;
       case AppButtonSize.lg:
-        fontSize = 16;
+        fontSize = AppFontSizes.input;
         iconSize = 20;
         break;
       case AppButtonSize.icon:
-        fontSize = 15;
+        fontSize = AppFontSizes.body;
         iconSize = 20;
         break;
     }

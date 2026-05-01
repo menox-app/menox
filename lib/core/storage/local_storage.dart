@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final localStorageProvider = Provider<LocalStorage>((ref) => throw UnimplementedError());
+final localStorageProvider = Provider<LocalStorage>(
+  (ref) => throw UnimplementedError(),
+);
 
 class LocalStorage {
   final SharedPreferences _prefs;
@@ -87,4 +89,3 @@ class LocalStorage {
     await _prefs.clear();
   }
 }
-

@@ -13,7 +13,7 @@ class AvatarConstants {
     "https://res.cloudinary.com/dpem8v9z7/image/upload/q_auto/f_auto/v1776067602/08_tqar6z.png",
     "https://res.cloudinary.com/dpem8v9z7/image/upload/q_auto/f_auto/v1776067602/04_bhucyh.png",
     "https://res.cloudinary.com/dpem8v9z7/image/upload/q_auto/f_auto/v1776067601/09_uvurms.png",
-    "https://res.cloudinary.com/dpem8v9z7/image/upload/q_auto/f_auto/v1776067600/02_aus2zc.png"
+    "https://res.cloudinary.com/dpem8v9z7/image/upload/q_auto/f_auto/v1776067600/02_aus2zc.png",
   ];
 
   static String get defaultAvatar => defaultAvatars.first;

@@ -23,6 +23,17 @@ class ShadcnColors {
   static const Color ring = Color(0xFF18181B);
 }
 
+class AppFontSizes {
+  static const double caption = 12;
+  static const double meta = 13;
+  static const double bodySmall = 15;
+  static const double body = 16;
+  static const double input = 16;
+  static const double title = 20;
+  static const double largeTitle = 26;
+  static const double display = 30;
+}
+
 class AppTheme {
   static CupertinoThemeData get cupertinoTheme {
     return const CupertinoThemeData(
@@ -34,18 +45,18 @@ class AppTheme {
         primaryColor: ShadcnColors.foreground,
         textStyle: TextStyle(
           fontFamily: '.SF Pro Text', // Standard iOS font if available
-          fontSize: 14,
+          fontSize: AppFontSizes.body,
           color: ShadcnColors.foreground,
         ),
         navLargeTitleTextStyle: TextStyle(
-          fontSize: 30,
+          fontSize: AppFontSizes.display,
           fontWeight: FontWeight.bold,
           letterSpacing: -0.5,
           color: ShadcnColors.foreground,
           fontFamily: '.SF Pro Display',
         ),
         navTitleTextStyle: TextStyle(
-          fontSize: 17,
+          fontSize: AppFontSizes.input,
           fontWeight: FontWeight.w600,
           color: ShadcnColors.foreground,
           fontFamily: '.SF Pro Text',
@@ -66,6 +77,62 @@ class AppTheme {
         onSurface: ShadcnColors.foreground,
       ),
       scaffoldBackgroundColor: ShadcnColors.background,
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.body,
+          height: 1.35,
+          color: ShadcnColors.foreground,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.bodySmall,
+          height: 1.35,
+          color: ShadcnColors.foreground,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.meta,
+          height: 1.3,
+          color: ShadcnColors.mutedForeground,
+        ),
+        labelLarge: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.body,
+          fontWeight: FontWeight.w600,
+          color: ShadcnColors.foreground,
+        ),
+        labelMedium: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.bodySmall,
+          fontWeight: FontWeight.w600,
+          color: ShadcnColors.foreground,
+        ),
+        labelSmall: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.caption,
+          fontWeight: FontWeight.w500,
+          color: ShadcnColors.mutedForeground,
+        ),
+        titleLarge: TextStyle(
+          fontFamily: '.SF Pro Display',
+          fontSize: AppFontSizes.largeTitle,
+          fontWeight: FontWeight.w700,
+          color: ShadcnColors.foreground,
+        ),
+        titleMedium: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.title,
+          fontWeight: FontWeight.w600,
+          color: ShadcnColors.foreground,
+        ),
+        titleSmall: TextStyle(
+          fontFamily: '.SF Pro Text',
+          fontSize: AppFontSizes.input,
+          fontWeight: FontWeight.w600,
+          color: ShadcnColors.foreground,
+        ),
+      ),
     );
   }
 }

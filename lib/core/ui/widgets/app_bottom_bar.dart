@@ -1,4 +1,6 @@
 import 'dart:ui';
+
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 
@@ -27,9 +29,7 @@ class AppBottomBar extends StatelessWidget {
         height: barHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          // ── Liquid Glass: Outer glow ──
           // CSS: box-shadow: 0px 0px 21px -8px rgba(255,255,255,0.3)
-          // Light theme → dùng dark shadow thay vì white glow
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF000000).withValues(alpha: 0.08),
@@ -46,13 +46,10 @@ class AppBottomBar extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
-            // ── Liquid Glass: backdrop blur tạo frosted effect ──
-            // Không cần tint màu — blur tự tạo glass
             filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                // ── Gần như trong suốt — CSS: rgba(255,255,255,0) ──
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -63,7 +60,6 @@ class AppBottomBar extends StatelessWidget {
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
-                // ── Glass edge — rất mỏng ──
                 border: Border.all(
                   color: const Color(0xFFFFFFFF).withValues(alpha: 0.25),
                   width: 0.5,
@@ -71,7 +67,6 @@ class AppBottomBar extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  // ── Inner highlight shimmer (top edge) ──
                   Positioned(
                     top: 0,
                     left: 0,
@@ -93,7 +88,6 @@ class AppBottomBar extends StatelessWidget {
                     ),
                   ),
 
-                  // ── Selection Pill — subtle glass ──
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutQuart,
@@ -107,19 +101,21 @@ class AppBottomBar extends StatelessWidget {
                         color: const Color(0xFFFFFFFF).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: const Color(0xFFFFFFFF).withValues(alpha: 0.12),
+                          color: const Color(
+                            0xFFFFFFFF,
+                          ).withValues(alpha: 0.12),
                           width: 0.5,
                         ),
                       ),
                     ),
                   ),
 
-                  // ── Icons Row ──
                   Row(
                     children: [
                       Expanded(
                         child: _NavBarItem(
-                          icon: CupertinoIcons.square_grid_2x2_fill,
+                          icon: FluentIcons.grid_20_regular,
+                          activeIcon: FluentIcons.grid_20_filled,
                           isSelected: selectedIndex == 0,
                           onTap: () => onItemSelected(0),
                           height: barHeight,
@@ -127,7 +123,8 @@ class AppBottomBar extends StatelessWidget {
                       ),
                       Expanded(
                         child: _NavBarItem(
-                          icon: CupertinoIcons.chat_bubble_fill,
+                          icon: FluentIcons.chat_32_regular,
+                          activeIcon: FluentIcons.chat_32_filled,
                           isSelected: selectedIndex == 1,
                           onTap: () => onItemSelected(1),
                           height: barHeight,
@@ -141,7 +138,8 @@ class AppBottomBar extends StatelessWidget {
                       ),
                       Expanded(
                         child: _NavBarItem(
-                          icon: CupertinoIcons.heart_fill,
+                          icon: FluentIcons.heart_32_regular,
+                          activeIcon: FluentIcons.heart_32_filled,
                           isSelected: selectedIndex == 3,
                           onTap: () => onItemSelected(3),
                           height: barHeight,
@@ -149,7 +147,8 @@ class AppBottomBar extends StatelessWidget {
                       ),
                       Expanded(
                         child: _NavBarItem(
-                          icon: CupertinoIcons.person_fill,
+                          icon: FluentIcons.person_32_regular,
+                          activeIcon: FluentIcons.person_32_filled,
                           isSelected: selectedIndex == 4,
                           onTap: () => onItemSelected(4),
                           height: barHeight,
@@ -169,12 +168,14 @@ class AppBottomBar extends StatelessWidget {
 
 class _NavBarItem extends StatelessWidget {
   final IconData icon;
+  final IconData activeIcon;
   final bool isSelected;
   final VoidCallback onTap;
   final double height;
 
   const _NavBarItem({
     required this.icon,
+    required this.activeIcon,
     required this.isSelected,
     required this.onTap,
     required this.height,
@@ -189,7 +190,7 @@ class _NavBarItem extends StatelessWidget {
         height: height,
         child: Center(
           child: Icon(
-            icon,
+            isSelected ? activeIcon : icon,
             color: isSelected
                 ? ShadcnColors.primary
                 : ShadcnColors.mutedForeground.withValues(alpha: 0.5),
@@ -229,7 +230,7 @@ class _CreateButton extends StatelessWidget {
               ],
             ),
             child: const Icon(
-              CupertinoIcons.add,
+              FluentIcons.add_24_filled,
               color: ShadcnColors.primaryForeground,
               size: 20,
             ),

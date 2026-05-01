@@ -21,7 +21,10 @@ class AppIconButton extends StatefulWidget {
     this.size = AppButtonSize.md,
     this.isLoading = false,
     this.sizeOverride,
-  }) : assert(icon != null || child != null, 'Either icon or child must be provided');
+  }) : assert(
+         icon != null || child != null,
+         'Either icon or child must be provided',
+       );
 
   @override
   State<AppIconButton> createState() => _AppIconButtonState();
@@ -72,13 +75,11 @@ class _AppIconButtonState extends State<AppIconButton>
   @override
   Widget build(BuildContext context) {
     final side = _getSize();
-    
+
     return AnimatedBuilder(
       animation: _scaleAnimation,
-      builder: (context, child) => Transform.scale(
-        scale: _scaleAnimation.value,
-        child: child,
-      ),
+      builder: (context, child) =>
+          Transform.scale(scale: _scaleAnimation.value, child: child),
       child: Container(
         width: side,
         height: side,
@@ -93,9 +94,7 @@ class _AppIconButtonState extends State<AppIconButton>
             onTap: widget.isLoading ? null : widget.onPressed,
             splashColor: _getSplashColor(),
             highlightColor: Colors.transparent,
-            child: Center(
-              child: _buildContent(),
-            ),
+            child: Center(child: _buildContent()),
           ),
         ),
       ),
