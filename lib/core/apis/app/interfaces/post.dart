@@ -1,5 +1,6 @@
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
+import 'package:flutter_core/core/apis/base/interfaces/serializable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'post.g.dart';
@@ -119,4 +120,41 @@ bool? _boolFromJson(dynamic value) {
   if (value is bool) return value;
   if (value is num) return value != 0;
   return value.toString() == 'true' || value.toString() == '1';
+}
+
+
+// CREATE POST
+@JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
+class CreatePostBody implements BaseSerializable {
+  final String content;
+  final String visibility;
+  final List<CreatePostMediaBody> medias;
+
+  CreatePostBody({
+    required this.content,
+    this.visibility = 'public',
+    this.medias = const [],
+  });
+
+  factory CreatePostBody.fromJson(Map<String, dynamic> json) =>
+      _$CreatePostBodyFromJson(json);
+
+  @override
+  Map<String, dynamic> toJson() => _$CreatePostBodyToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class CreatePostMediaBody {
+  final String mediaId;
+  final int order;
+
+  CreatePostMediaBody({
+    required this.mediaId,
+    required this.order,
+  });
+
+  factory CreatePostMediaBody.fromJson(Map<String, dynamic> json) =>
+      _$CreatePostMediaBodyFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CreatePostMediaBodyToJson(this);
 }

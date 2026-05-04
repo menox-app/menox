@@ -1,9 +1,11 @@
 import 'package:flutter_core/core/apis/app/client/auth.dart';
 import 'package:flutter_core/core/apis/app/client/post.dart';
+import 'package:flutter_core/core/apis/app/client/upload.dart';
 import 'package:flutter_core/core/apis/base/client/dio_factory.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
 export 'package:flutter_core/core/apis/app/client/post.dart';
 export 'package:flutter_core/core/apis/app/client/auth.dart';
+export 'package:flutter_core/core/apis/app/client/upload.dart';
 
 /// API Client tập trung — giống `export const yaahApi = new YaahApiClient()` trong TypeScript.
 ///
@@ -18,8 +20,12 @@ class AppApi {
 
   final AuthApiClient auth;
   final PostApiClient posts;
+  final UploadApiClient upload;
 
-  AppApi._() : auth = AuthApiClient(), posts = PostApiClient();
+  AppApi._()
+    : auth = AuthApiClient(),
+      posts = PostApiClient(),
+      upload = UploadApiClient();
 
   /// Gọi 1 lần trong main.dart — khởi tạo DioFactory + AppApi
   static void initialize({

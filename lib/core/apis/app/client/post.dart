@@ -19,4 +19,9 @@ class PostApiClient extends AppCrudApiClient<Post> {
 
     return mapToCustomPaginationResponse<Comment>(response, Comment.fromJson);
   }
+
+  Future<BaseResponse<Post>> createPost(CreatePostBody body) async {
+    final response = await client.post('', data: body.toJson());
+    return mapToResponse(response);
+  }
 }

@@ -83,3 +83,33 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
       ?.map((e) => e.toJson())
       .toList(),
 };
+
+CreatePostBody _$CreatePostBodyFromJson(Map<String, dynamic> json) =>
+    CreatePostBody(
+      content: json['content'] as String,
+      visibility: json['visibility'] as String? ?? 'public',
+      medias:
+          (json['medias'] as List<dynamic>?)
+              ?.map(
+                (e) => CreatePostMediaBody.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$CreatePostBodyToJson(CreatePostBody instance) =>
+    <String, dynamic>{
+      'content': instance.content,
+      'visibility': instance.visibility,
+      'medias': instance.medias.map((e) => e.toJson()).toList(),
+    };
+
+CreatePostMediaBody _$CreatePostMediaBodyFromJson(Map<String, dynamic> json) =>
+    CreatePostMediaBody(
+      mediaId: json['media_id'] as String,
+      order: (json['order'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$CreatePostMediaBodyToJson(
+  CreatePostMediaBody instance,
+) => <String, dynamic>{'media_id': instance.mediaId, 'order': instance.order};
