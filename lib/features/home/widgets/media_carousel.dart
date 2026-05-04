@@ -16,6 +16,7 @@ class MediaCarousel extends StatefulWidget {
   final num? commentCount;
   final num? repostCount;
   final num? shareCount;
+  final EdgeInsetsGeometry padding;
 
   const MediaCarousel({
     super.key,
@@ -24,6 +25,7 @@ class MediaCarousel extends StatefulWidget {
     this.commentCount,
     this.repostCount,
     this.shareCount,
+    this.padding = EdgeInsets.zero,
   });
 
   @override
@@ -83,7 +85,9 @@ class _MediaCarouselState extends State<MediaCarousel> {
   }
 
   Widget _buildSingleImage(Media media, List<Media> allMedias) {
-    return GestureDetector(
+    return Padding(
+      padding: widget.padding,
+      child: GestureDetector(
       onTap: () => MediaViewer.open(
         context,
         allMedias,
@@ -101,8 +105,9 @@ class _MediaCarouselState extends State<MediaCarousel> {
           child: AppImage(url: media.url, fit: BoxFit.cover),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHorizontalScroll(List<Media> images, List<Media> allMedias) {
     // Card width = ~70% of available width so next card peeks
@@ -124,7 +129,7 @@ class _MediaCarouselState extends State<MediaCarousel> {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.zero,
+          padding: widget.padding,
           itemCount: images.length,
           separatorBuilder: (_, __) => const SizedBox(width: 6),
           itemBuilder: (_, i) {
@@ -155,9 +160,11 @@ class _MediaCarouselState extends State<MediaCarousel> {
 
   Widget _buildVideoPlayer() {
     if (_videoError != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
+      return Padding(
+        padding: widget.padding,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
           width: double.infinity,
           height: _mediaHeight,
           color: ShadcnColors.secondary,
@@ -175,23 +182,29 @@ class _MediaCarouselState extends State<MediaCarousel> {
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
     if (!_isVideoInitialized || _videoController == null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
+      return Padding(
+        padding: widget.padding,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
           width: double.infinity,
           height: _mediaHeight,
           color: ShadcnColors.secondary,
           child: const Center(child: AppSpinner()),
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    return VisibilityDetector(
-      key: Key('video_${widget.medias.first.id}'),
+    return Padding(
+      padding: widget.padding,
+      child: VisibilityDetector(
+        key: Key('video_${widget.medias.first.id}'),
       onVisibilityChanged: (info) {
         if (!mounted || _videoController == null || !_isVideoInitialized) {
           return;
@@ -278,6 +291,7 @@ class _MediaCarouselState extends State<MediaCarousel> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

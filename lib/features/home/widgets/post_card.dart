@@ -4,14 +4,16 @@ import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/features/home/screens/post_detail_screen.dart';
 import 'package:flutter_core/features/home/widgets/media_carousel.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Threads-style post card:
 class PostCard extends StatelessWidget {
   final Post post;
+  final bool isDetail;
 
-  const PostCard({super.key, required this.post});
+  const PostCard({super.key, required this.post, this.isDetail = false});
 
   String _timeAgo(DateTime? date) {
     if (date == null) return '';
@@ -44,64 +46,249 @@ class PostCard extends StatelessWidget {
     final hasContent = post.content != null && post.content!.trim().isNotEmpty;
     final hasHighlights = highlightComments.isNotEmpty;
 
-    return Container(
-      color: ShadcnColors.background,
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              if (hasHighlights)
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _ThreadLinePainter(color: ShadcnColors.border),
-                  ),
-                ),
+    if (isDetail) {
+      return _buildDetailView(context, author, medias, hasContent, hasMedia);
+    }
 
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                child: Row(
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (context) => PostDetailScreen(post: post),
+          ),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: ShadcnColors.background,
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                if (hasHighlights)
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _ThreadLinePainter(color: ShadcnColors.border),
+                    ),
+                  ),
+
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(children: [_buildAvatar(author)]),
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: Column(
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildHeader(author),
-
-                          if (hasContent) ...[
-                            const SizedBox(height: 4),
-                            _buildContent(),
-                          ],
-
-                          if (hasMedia) ...[
-                            const SizedBox(height: 10),
-                            MediaCarousel(
-                              medias: medias,
-                              likeCount: post.likeCount,
-                              commentCount: post.commentCount,
-                              repostCount: post.repostCount,
-                              shareCount: post.shareCount,
+                          _buildAvatar(author),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeader(author),
+                                if (hasContent) ...[
+                                  const SizedBox(height: 4),
+                                  _buildContent(),
+                                ],
+                              ],
                             ),
-                          ],
-
-                          const SizedBox(height: 6),
-                          _buildActionBar(),
-
-                          SizedBox(height: hasHighlights ? 6 : 10),
+                          ),
                         ],
+                      ),
+                    ),
+
+                    if (hasMedia) ...[
+                      const SizedBox(height: 10),
+                      MediaCarousel(
+                        medias: medias,
+                        likeCount: post.likeCount,
+                        commentCount: post.commentCount,
+                        repostCount: post.repostCount,
+                        shareCount: post.shareCount,
+                        padding: const EdgeInsets.only(left: 66, right: 16), // 16 (pad) + 38 (avatar) + 12 (gap) = 66
+                      ),
+                    ],
+
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(66, 0, 16, 0),
+                      child: _buildActionBar(),
+                    ),
+
+                    SizedBox(height: hasHighlights ? 6 : 10),
+                  ],
+                ),
+              ],
+            ),
+
+            if (hasHighlights && !isDetail)
+              _buildHighlightComments(highlightComments),
+
+            Container(height: 0.5, color: ShadcnColors.border),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailView(
+    BuildContext context,
+    Author? author,
+    List<Media> medias,
+    bool hasContent,
+    bool hasMedia,
+  ) {
+    return Container(
+      color: ShadcnColors.background,
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _buildAvatar(author),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          author?.displayName ?? author?.username ?? 'Unknown',
+                          style: const TextStyle(
+                            fontSize: AppFontSizes.body,
+                            fontWeight: FontWeight.w600,
+                            color: ShadcnColors.foreground,
+                            letterSpacing: -0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _timeAgo(post.createdAt),
+                        style: const TextStyle(
+                          fontSize: AppFontSizes.bodySmall,
+                          color: ShadcnColors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Threads Icon + Text
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ShadcnColors.foreground.withValues(alpha: 0.1),
+                      ),
+                      child: const Icon(
+                        FluentIcons.share_android_24_regular,
+                        size: 10,
+                        color: ShadcnColors.foreground,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Threads',
+                      style: TextStyle(
+                        fontSize: AppFontSizes.body,
+                        fontWeight: FontWeight.w600,
+                        color: ShadcnColors.foreground,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(width: 16),
+                const Icon(
+                  FluentIcons.more_horizontal_24_regular,
+                  color: ShadcnColors.foreground,
+                  size: 20,
+                ),
+              ],
+            ),
           ),
-
-          if (hasHighlights) _buildHighlightComments(highlightComments),
-
+          if (hasContent) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                post.content!,
+                style: const TextStyle(
+                  fontSize: AppFontSizes.body,
+                  height: 1.45,
+                  color: ShadcnColors.foreground,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ),
+          ],
+          if (hasMedia) ...[
+            const SizedBox(height: 12),
+            MediaCarousel(
+              medias: medias,
+              likeCount: post.likeCount,
+              commentCount: post.commentCount,
+              repostCount: post.repostCount,
+              shareCount: post.shareCount,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildDetailActionBar(),
+          ),
+          const SizedBox(height: 12),
+          Container(height: 0.5, color: ShadcnColors.border),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Liên quan nhất',
+                      style: TextStyle(
+                        fontSize: AppFontSizes.body,
+                        fontWeight: FontWeight.w600,
+                        color: ShadcnColors.foreground,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      FluentIcons.chevron_down_20_regular,
+                      size: 16,
+                      color: ShadcnColors.mutedForeground,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Xem hoạt động',
+                      style: TextStyle(
+                        fontSize: AppFontSizes.bodySmall,
+                        color: ShadcnColors.mutedForeground,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      FluentIcons.chevron_right_20_regular,
+                      size: 14,
+                      color: ShadcnColors.mutedForeground,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           Container(height: 0.5, color: ShadcnColors.border),
         ],
       ),
@@ -345,11 +532,55 @@ class PostCard extends StatelessWidget {
     );
   }
 
+  Widget _buildDetailActionBar() {
+    return Transform.translate(
+      offset: const Offset(-8, 0),
+      child: Row(
+        spacing: 16,
+        children: [
+          _actionButton(
+            icon: post.isLiked == true
+                ? FluentIcons.heart_24_filled
+                : FluentIcons.heart_24_regular,
+            color: post.isLiked == true
+                ? CupertinoColors.systemRed
+                : ShadcnColors.foreground,
+            count: post.likeCount,
+            onTap: () {},
+            large: true,
+          ),
+          _actionButton(
+            icon: FluentIcons.chat_24_regular,
+            color: ShadcnColors.foreground,
+            count: post.commentCount,
+            onTap: () {},
+            large: true,
+          ),
+          _actionButton(
+            icon: FluentIcons.arrow_sync_24_regular,
+            color: ShadcnColors.foreground,
+            count: post.repostCount,
+            onTap: () {},
+            large: true,
+          ),
+          _actionButton(
+            icon: FluentIcons.send_24_regular,
+            color: ShadcnColors.foreground,
+            count: post.shareCount,
+            onTap: () {},
+            large: true,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _actionButton({
     required IconData icon,
     required Color color,
     num? count,
     required VoidCallback onTap,
+    bool large = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -359,13 +590,13 @@ class PostCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color),
+            Icon(icon, size: large ? 22 : 18, color: color),
             if (count != null && count > 0) ...[
               const SizedBox(width: 4),
               Text(
                 _formatCount(count),
                 style: TextStyle(
-                  fontSize: AppFontSizes.caption,
+                  fontSize: large ? AppFontSizes.body : AppFontSizes.caption,
                   color: color,
                   fontWeight: FontWeight.w400,
                 ),
