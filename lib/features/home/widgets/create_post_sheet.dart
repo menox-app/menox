@@ -57,6 +57,45 @@ InfiniteData<List<Post>, int> _prependPostToInfiniteData(
 
 enum _AttachmentType { image, video }
 
+enum _ReplyPermission {
+  anyone,
+  followers,
+  mentioned;
+
+  String get label {
+    switch (this) {
+      case _ReplyPermission.anyone:
+        return 'Anyone can reply';
+      case _ReplyPermission.followers:
+        return 'Followers only';
+      case _ReplyPermission.mentioned:
+        return 'Mentioned only';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case _ReplyPermission.anyone:
+        return 'Anyone can reply';
+      case _ReplyPermission.followers:
+        return 'Followers can reply';
+      case _ReplyPermission.mentioned:
+        return 'Mentioned can reply';
+    }
+  }
+
+  String get ephemeralDescription {
+    switch (this) {
+      case _ReplyPermission.anyone:
+        return 'Anyone can reply, others must request';
+      case _ReplyPermission.followers:
+        return 'Only your followers can reply, others must request';
+      case _ReplyPermission.mentioned:
+        return 'Only mentioned people can reply';
+    }
+  }
+}
+
 class _ComposerAttachment {
   final XFile file;
   final _AttachmentType type;
@@ -78,6 +117,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
   final List<_ComposerAttachment> _attachments = [];
   bool _isPosting = false;
+  _ReplyPermission _replyPermission = _ReplyPermission.anyone;
+  bool _isEphemeral = false;
 
   @override
   void initState() {
@@ -249,6 +290,23 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     );
   }
 
+  Future<void> _showPostSettings() async {
+    HapticFeedback.selectionClick();
+    final result = await showModalBottomSheet<_ReplyPermission>(
+      context: context,
+      backgroundColor: ShadcnColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) =>
+          _PostSettingsSheet(initialPermission: _replyPermission),
+    );
+
+    if (result != null && mounted) {
+      setState(() => _replyPermission = result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -278,7 +336,10 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             bottomBarVisibility: const BottomBarVisibility.always(
               ignoreBottomInset: true,
             ),
-            topBar: _ComposerTopBar(onCancel: _close),
+            topBar: _ComposerTopBar(
+              onCancel: _close,
+              isEphemeral: _isEphemeral,
+            ),
             body: _ComposerBody(
               contentController: _contentController,
               focusNode: _focusNode,
@@ -286,11 +347,17 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               onRemoveAttachment: (index) =>
                   setState(() => _attachments.removeAt(index)),
               onPickMedia: _pickMedia,
+              isEphemeral: _isEphemeral,
             ),
             bottomBar: _ComposerBottomBar(
               canPost: _canPost,
               isPosting: _isPosting,
               onSubmit: _submit,
+              replyPermission: _replyPermission,
+              isEphemeral: _isEphemeral,
+              onToggleEphemeral: () =>
+                  setState(() => _isEphemeral = !_isEphemeral),
+              onOpenSettings: () => _showPostSettings(),
             ),
           ),
         ),
@@ -301,8 +368,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
 class _ComposerTopBar extends StatelessWidget {
   final VoidCallback onCancel;
+  final bool isEphemeral;
 
-  const _ComposerTopBar({required this.onCancel});
+  const _ComposerTopBar({required this.onCancel, this.isEphemeral = false});
 
   @override
   Widget build(BuildContext context) {
@@ -317,9 +385,9 @@ class _ComposerTopBar extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          const Text(
-            'New post',
-            style: TextStyle(
+          Text(
+            isEphemeral ? 'New ephemeral post' : 'New post',
+            style: const TextStyle(
               color: ShadcnColors.foreground,
               fontSize: AppFontSizes.input,
               fontWeight: FontWeight.w800,
@@ -351,6 +419,7 @@ class _ComposerBody extends HookConsumerWidget {
   final List<_ComposerAttachment> attachments;
   final ValueChanged<int> onRemoveAttachment;
   final VoidCallback onPickMedia;
+  final bool isEphemeral;
 
   const _ComposerBody({
     required this.contentController,
@@ -358,6 +427,7 @@ class _ComposerBody extends HookConsumerWidget {
     required this.attachments,
     required this.onRemoveAttachment,
     required this.onPickMedia,
+    this.isEphemeral = false,
   });
 
   @override
@@ -397,14 +467,15 @@ class _ComposerBody extends HookConsumerWidget {
                         backgroundColor: ShadcnColors.secondary,
                       ),
                     ),
-                    // Vertical thread line that fills remaining height
-                    Expanded(
-                      child: Container(
-                        width: 1.5,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        color: ShadcnColors.border,
+                    // Vertical thread line (hidden in ephemeral mode)
+                    if (!isEphemeral)
+                      Expanded(
+                        child: Container(
+                          width: 1.5,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          color: ShadcnColors.border,
+                        ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(width: 12),
@@ -413,7 +484,7 @@ class _ComposerBody extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Username + topic row
+                      // Username row (topic hidden in ephemeral mode)
                       Row(
                         children: [
                           Flexible(
@@ -428,52 +499,103 @@ class _ComposerBody extends HookConsumerWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            FluentIcons.chevron_right_24_regular,
-                            color: ShadcnColors.mutedForeground,
-                            size: 12,
-                          ),
-                          const SizedBox(width: 6),
-                          const Flexible(
-                            child: Text(
-                              'Add topic',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: ShadcnColors.mutedForeground,
-                                fontSize: AppFontSizes.bodySmall,
+                          if (!isEphemeral) ...[
+                            const SizedBox(width: 8),
+                            const Icon(
+                              FluentIcons.chevron_right_24_regular,
+                              color: ShadcnColors.mutedForeground,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 6),
+                            const Flexible(
+                              child: Text(
+                                'Add topic',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: ShadcnColors.mutedForeground,
+                                  fontSize: AppFontSizes.bodySmall,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                       // Text input
-                      TextField(
-                        controller: contentController,
-                        focusNode: focusNode,
-                        autofocus: true,
-                        keyboardType: TextInputType.multiline,
-                        textCapitalization: TextCapitalization.sentences,
-                        minLines: 1,
-                        maxLines: null,
-                        cursorColor: ShadcnColors.foreground,
-                        style: const TextStyle(
-                          color: ShadcnColors.foreground,
-                          fontSize: AppFontSizes.body,
-                          height: 1.35,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: "What's new?",
-                          hintStyle: TextStyle(
-                            color: ShadcnColors.mutedForeground,
-                            fontSize: AppFontSizes.body,
+                      if (isEphemeral)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IntrinsicWidth(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minWidth: 120),
+                              child: CustomPaint(
+                                painter: _DashedBubblePainter(
+                                  color: ShadcnColors.border,
+                                  strokeWidth: 1.5,
+                                  dashWidth: 5,
+                                  dashGap: 4,
+                                  radius: 16,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      14, 10, 14, 10),
+                                  child: TextField(
+                                    controller: contentController,
+                                    focusNode: focusNode,
+                                    autofocus: true,
+                                    keyboardType: TextInputType.multiline,
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    minLines: 1,
+                                    maxLines: null,
+                                    cursorColor: ShadcnColors.foreground,
+                                    style: const TextStyle(
+                                      color: ShadcnColors.foreground,
+                                      fontSize: AppFontSizes.body,
+                                      height: 1.35,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: "What's new?",
+                                      hintStyle: TextStyle(
+                                        color: ShadcnColors.mutedForeground,
+                                        fontSize: AppFontSizes.body,
+                                      ),
+                                      border: InputBorder.none,
+                                      isCollapsed: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          border: InputBorder.none,
-                          isCollapsed: true,
-                          contentPadding: EdgeInsets.only(top: 6, bottom: 10),
+                        )
+                      else
+                        TextField(
+                          controller: contentController,
+                          focusNode: focusNode,
+                          autofocus: true,
+                          keyboardType: TextInputType.multiline,
+                          textCapitalization: TextCapitalization.sentences,
+                          minLines: 1,
+                          maxLines: null,
+                          cursorColor: ShadcnColors.foreground,
+                          style: const TextStyle(
+                            color: ShadcnColors.foreground,
+                            fontSize: AppFontSizes.body,
+                            height: 1.35,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: "What's new?",
+                            hintStyle: TextStyle(
+                              color: ShadcnColors.mutedForeground,
+                              fontSize: AppFontSizes.body,
+                            ),
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            contentPadding: EdgeInsets.only(top: 6, bottom: 10),
+                          ),
                         ),
-                      ),
                       // Attachments (if any)
                       if (attachments.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -482,44 +604,52 @@ class _ComposerBody extends HookConsumerWidget {
                           onRemoveAttachment: onRemoveAttachment,
                         ),
                       ],
-                      // ── Row 2: Toolbar ──
-                      const SizedBox(height: 8),
-                      _ComposerToolbar(onPickMedia: onPickMedia),
+                      // ── Toolbar (hidden in ephemeral mode) ──
+                      if (!isEphemeral) ...[
+                        const SizedBox(height: 8),
+                        _ComposerToolbar(onPickMedia: onPickMedia),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          // ── Row 3: "Add to thread" button ──
-          const SizedBox(height: 4),
-          Opacity(
-            opacity: 0.35,
-            child: Row(
-              children: [
-                // Align with avatar center (46/2 - 22/2 = 12px offset)
-                SizedBox(
-                  width: 46,
-                  child: Center(
-                    child: AppImage.avatar(
-                      url: user?.avatarUrl,
-                      size: 22,
-                      backgroundColor: ShadcnColors.secondary,
-                      errorIconSize: 12,
+          // ── "Add to thread" button (hidden in ephemeral mode) ──
+          if (!isEphemeral) ...[
+            const SizedBox(height: 4),
+            Opacity(
+              opacity: 0.35,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 46,
+                    child: Center(
+                      child: AppImage.avatar(
+                        url: user?.avatarUrl,
+                        size: 22,
+                        backgroundColor: ShadcnColors.secondary,
+                        errorIconSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                const Text(
-                  'Add to thread',
-                  style: TextStyle(
-                    color: Color(0xFFD4D4D8),
-                    fontSize: AppFontSizes.bodySmall,
-                    fontWeight: FontWeight.w500,
+                  const Text(
+                    'Add to thread',
+                    style: TextStyle(
+                      color: Color(0xFFD4D4D8),
+                      fontSize: AppFontSizes.bodySmall,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
+          // ── Ephemeral info notice ──
+          if (isEphemeral) ...[
+            const SizedBox(height: 24),
+            _EphemeralNotice(),
+          ],
         ],
       ),
     );
@@ -706,11 +836,19 @@ class _ComposerBottomBar extends StatelessWidget {
   final bool canPost;
   final bool isPosting;
   final VoidCallback onSubmit;
+  final _ReplyPermission replyPermission;
+  final bool isEphemeral;
+  final VoidCallback onToggleEphemeral;
+  final VoidCallback onOpenSettings;
 
   const _ComposerBottomBar({
     required this.canPost,
     required this.isPosting,
     required this.onSubmit,
+    required this.replyPermission,
+    required this.isEphemeral,
+    required this.onToggleEphemeral,
+    required this.onOpenSettings,
   });
 
   @override
@@ -726,43 +864,84 @@ class _ComposerBottomBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(
-            FluentIcons.options_24_regular,
-            color: ShadcnColors.mutedForeground,
-            size: 26,
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'Reply options',
-            style: TextStyle(
-              color: ShadcnColors.mutedForeground,
-              fontSize: AppFontSizes.bodySmall,
-              fontWeight: FontWeight.w700,
+          // Reply permission label (tappable)
+          Expanded(
+            child: GestureDetector(
+              onTap: onOpenSettings,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    isEphemeral
+                        ? FluentIcons.mail_24_regular
+                        : FluentIcons.earth_24_regular,
+                    color: ShadcnColors.mutedForeground,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      isEphemeral
+                          ? replyPermission.ephemeralDescription
+                          : replyPermission.shortLabel,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: ShadcnColors.mutedForeground,
+                        fontSize: AppFontSizes.caption,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const Spacer(),
-          Container(
-            width: 66,
-            height: 46,
-            decoration: BoxDecoration(
-              color: ShadcnColors.secondary,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 42,
-                height: 42,
-                margin: const EdgeInsets.only(left: 2),
-                decoration: BoxDecoration(
-                  color: ShadcnColors.background,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: ShadcnColors.border),
-                ),
-                child: const Icon(
-                  FluentIcons.person_circle_24_regular,
-                  color: ShadcnColors.mutedForeground,
-                  size: 25,
+          const SizedBox(width: 12),
+          // Ephemeral toggle
+          GestureDetector(
+            onTap: onToggleEphemeral,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: 66,
+              height: 40,
+              decoration: BoxDecoration(
+                color: ShadcnColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                alignment: isEphemeral
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: isEphemeral
+                        ? ShadcnColors.primary
+                        : ShadcnColors.background,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: ShadcnColors.primary.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    FluentIcons.chat_history_24_filled,
+                    color: isEphemeral
+                        ? ShadcnColors.primaryForeground
+                        : ShadcnColors.mutedForeground,
+                    size: 22,
+                  ),
                 ),
               ),
             ),
@@ -773,6 +952,266 @@ class _ComposerBottomBar extends StatelessWidget {
             text: "Post",
             disabled: !canPost || isPosting,
             isLoading: isPosting,
+            height: 40,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Post Settings Bottom Sheet ──────────────────────────────────────────────
+
+class _PostSettingsSheet extends StatefulWidget {
+  final _ReplyPermission initialPermission;
+
+  const _PostSettingsSheet({required this.initialPermission});
+
+  @override
+  State<_PostSettingsSheet> createState() => _PostSettingsSheetState();
+}
+
+class _PostSettingsSheetState extends State<_PostSettingsSheet> {
+  late _ReplyPermission _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initialPermission;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Handle bar ──
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 20),
+              decoration: BoxDecoration(
+                color: ShadcnColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // ── Section title ──
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'Who can reply and quote',
+              style: TextStyle(
+                color: ShadcnColors.mutedForeground,
+                fontSize: AppFontSizes.bodySmall,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // ── Reply permission options ──
+          ..._ReplyPermission.values.map((option) {
+            final isSelected = _selected == option;
+            return _SettingsRadioTile(
+              label: option.label,
+              isSelected: isSelected,
+              onTap: () => setState(() => _selected = option),
+            );
+          }),
+
+          const SizedBox(height: 16),
+
+          // ── Done button ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: AppButton(
+              text: 'Done',
+              fullWidth: true,
+              onPressed: () => Navigator.of(context).pop(_selected),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsRadioTile extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SettingsRadioTile({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: ShadcnColors.foreground,
+                  fontSize: AppFontSizes.body,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? ShadcnColors.primary : Colors.transparent,
+                border: Border.all(
+                  color: isSelected
+                      ? ShadcnColors.primary
+                      : ShadcnColors.border,
+                  width: isSelected ? 0 : 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: ShadcnColors.primaryForeground,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Dashed bubble border painter for ephemeral mode ─────────────────────────
+
+class _DashedBubblePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashGap;
+  final double radius;
+
+  _DashedBubblePainter({
+    required this.color,
+    this.strokeWidth = 1.5,
+    this.dashWidth = 5,
+    this.dashGap = 4,
+    this.radius = 16,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    // Chat bubble shape: rounded rect with smaller top-left radius
+    final path = Path();
+    final r = radius;
+    final smallR = r * 0.25; // Small radius for the "tail" corner
+
+    path.moveTo(smallR, 0);
+    path.lineTo(size.width - r, 0);
+    path.arcToPoint(Offset(size.width, r),
+        radius: Radius.circular(r));
+    path.lineTo(size.width, size.height - r);
+    path.arcToPoint(Offset(size.width - r, size.height),
+        radius: Radius.circular(r));
+    path.lineTo(r, size.height);
+    path.arcToPoint(Offset(0, size.height - r),
+        radius: Radius.circular(r));
+    path.lineTo(0, smallR);
+    path.arcToPoint(Offset(smallR, 0),
+        radius: Radius.circular(smallR));
+    path.close();
+
+    // Draw dashed path
+    final metrics = path.computeMetrics();
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = distance + dashWidth;
+        canvas.drawPath(
+          metric.extractPath(distance, end.clamp(0, metric.length)),
+          paint,
+        );
+        distance = end + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBubblePainter oldDelegate) =>
+      color != oldDelegate.color ||
+      strokeWidth != oldDelegate.strokeWidth ||
+      dashWidth != oldDelegate.dashWidth ||
+      dashGap != oldDelegate.dashGap ||
+      radius != oldDelegate.radius;
+}
+
+// ── Ephemeral info notice ───────────────────────────────────────────────────
+
+class _EphemeralNotice extends StatefulWidget {
+  @override
+  State<_EphemeralNotice> createState() => _EphemeralNoticeState();
+}
+
+class _EphemeralNoticeState extends State<_EphemeralNotice> {
+  bool _dismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: ShadcnColors.secondary,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              'Ephemeral posts auto-hide from the feed after 24 hours. '
+              'Replies will be moved to messages. '
+              'Only you can see who liked and replied.',
+              style: TextStyle(
+                color: ShadcnColors.mutedForeground,
+                fontSize: AppFontSizes.caption,
+                height: 1.4,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _dismissed = true),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(
+                FluentIcons.dismiss_16_regular,
+                color: ShadcnColors.mutedForeground,
+                size: 16,
+              ),
+            ),
           ),
         ],
       ),
