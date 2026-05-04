@@ -1,11 +1,20 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/interfaces/post.dart';
+import 'package:flutter_core/core/apis/app/interfaces/upload.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/app_button.dart';
+import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_query/flutter_query.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
@@ -24,6 +33,26 @@ Future<void> showCreatePostSheet(BuildContext context) {
       builder: (context) => const CreatePostSheet(),
     ),
   );
+}
+
+InfiniteData<List<Post>, int> _prependPostToInfiniteData(
+  InfiniteData<List<Post>, int>? previous,
+  Post post,
+) {
+  if (previous == null || previous.pages.isEmpty) {
+    return InfiniteData<List<Post>, int>(
+      [
+        [post],
+      ],
+      const [1],
+    );
+  }
+
+  final pages = [...previous.pages];
+  final firstPage = pages.first.where((item) => item.id != post.id).toList();
+  pages[0] = [post, ...firstPage];
+
+  return InfiniteData<List<Post>, int>(pages, previous.pageParams);
 }
 
 enum _AttachmentType { image, video }
@@ -78,7 +107,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
   Future<void> _close() async {
     if (!_hasDraft) {
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
       return;
     }
 
@@ -102,7 +131,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     );
 
     if (shouldDiscard == true && mounted) {
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
     }
   }
 
@@ -137,17 +166,79 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     if (!_canPost || _isPosting) return;
 
     setState(() => _isPosting = true);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    if (!mounted) return;
-    setState(() => _isPosting = false);
+    try {
+      final medias = await _uploadAttachments();
+      final response = await api.posts.createPost(
+        CreatePostBody(
+          content: _contentController.text.trim(),
+          visibility: 'public',
+          medias: medias,
+        ),
+      );
 
-    await showCupertinoDialog<void>(
+      if (!mounted) return;
+      _prependPostToFeed(response.data);
+      Navigator.of(context, rootNavigator: true).pop();
+    } catch (error) {
+      if (!mounted) return;
+      await _showSubmitError(error);
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  void _prependPostToFeed(Post post) {
+    final queryClient = QueryClientProvider.of(context);
+
+    queryClient.setQueryData<InfiniteData<List<Post>, int>, dynamic>([
+      'posts',
+      'feed',
+    ], (previous) => _prependPostToInfiniteData(previous, post));
+
+    unawaited(
+      queryClient.invalidateQueries(
+        queryKey: ['posts', 'feed'],
+        exact: true,
+        refetchType: RefetchType.active,
+      ),
+    );
+  }
+
+  Future<List<CreatePostMediaBody>> _uploadAttachments() async {
+    if (_attachments.isEmpty) return const [];
+
+    final files = _attachments.map((attachment) {
+      return File(attachment.file.path);
+    }).toList();
+
+    final response = files.length == 1
+        ? await api.upload.single(
+            IUploadSingleRequest(file: files.first, folder: 'posts'),
+          )
+        : await api.upload.multiple(
+            IUploadMultipleRequest(files: files, folder: 'posts'),
+          );
+
+    final uploads = response.data is List
+        ? response.data as List
+        : [response.data];
+
+    return uploads.indexed.map((entry) {
+      final (index, upload) = entry;
+      final mediaId = upload.mediaId;
+      if (mediaId == null || mediaId.isEmpty) {
+        throw StateError('Upload response missing mediaId at index $index');
+      }
+      return CreatePostMediaBody(mediaId: mediaId, order: index);
+    }).toList();
+  }
+
+  Future<void> _showSubmitError(Object error) {
+    return showCupertinoDialog<void>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Draft ready'),
-        content: const Text(
-          'Post composer is ready. Next step is wiring upload/create API.',
-        ),
+        title: const Text('Post failed'),
+        content: Text(error.toString()),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
@@ -216,7 +307,7 @@ class _ComposerTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
+      height: 56,
       decoration: const BoxDecoration(
         color: ShadcnColors.background,
         border: Border(
@@ -277,120 +368,147 @@ class _ComposerBody extends HookConsumerWidget {
         : 'memox_user';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 28),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 46,
-            child: Column(
+          // ── Row 1: Avatar + thread line │ Name + topic + text input ──
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: ShadcnColors.border, width: 0.5),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: AppImage.avatar(
-                    url: user?.avatarUrl,
-                    size: 46,
-                    backgroundColor: ShadcnColors.secondary,
-                  ),
+                // Left column: avatar → vertical thread line
+                Column(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: ShadcnColors.border,
+                          width: 0.5,
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: AppImage.avatar(
+                        url: user?.avatarUrl,
+                        size: 46,
+                        backgroundColor: ShadcnColors.secondary,
+                      ),
+                    ),
+                    // Vertical thread line that fills remaining height
+                    Expanded(
+                      child: Container(
+                        width: 1.5,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        color: ShadcnColors.border,
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  width: 2,
-                  height: 92,
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  color: ShadcnColors.border,
-                ),
-                Opacity(
-                  opacity: 0.35,
-                  child: AppImage.avatar(
-                    url: user?.avatarUrl,
-                    size: 22,
-                    backgroundColor: ShadcnColors.secondary,
-                    errorIconSize: 12,
+                const SizedBox(width: 12),
+                // Right column: username + topic, text field, attachments, toolbar
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Username + topic row
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              username,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: ShadcnColors.foreground,
+                                fontSize: AppFontSizes.body,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            FluentIcons.chevron_right_24_regular,
+                            color: ShadcnColors.mutedForeground,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 6),
+                          const Flexible(
+                            child: Text(
+                              'Add topic',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: ShadcnColors.mutedForeground,
+                                fontSize: AppFontSizes.bodySmall,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Text input
+                      TextField(
+                        controller: contentController,
+                        focusNode: focusNode,
+                        autofocus: true,
+                        keyboardType: TextInputType.multiline,
+                        textCapitalization: TextCapitalization.sentences,
+                        minLines: 1,
+                        maxLines: null,
+                        cursorColor: ShadcnColors.foreground,
+                        style: const TextStyle(
+                          color: ShadcnColors.foreground,
+                          fontSize: AppFontSizes.body,
+                          height: 1.35,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: "What's new?",
+                          hintStyle: TextStyle(
+                            color: ShadcnColors.mutedForeground,
+                            fontSize: AppFontSizes.body,
+                          ),
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                          contentPadding: EdgeInsets.only(top: 6, bottom: 10),
+                        ),
+                      ),
+                      // Attachments (if any)
+                      if (attachments.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        _AttachmentStrip(
+                          attachments: attachments,
+                          onRemoveAttachment: onRemoveAttachment,
+                        ),
+                      ],
+                      // ── Row 2: Toolbar ──
+                      const SizedBox(height: 8),
+                      _ComposerToolbar(onPickMedia: onPickMedia),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ── Row 3: "Add to thread" button ──
+          const SizedBox(height: 4),
+          Opacity(
+            opacity: 0.35,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        username,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: ShadcnColors.foreground,
-                          fontSize: AppFontSizes.body,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                // Align with avatar center (46/2 - 22/2 = 12px offset)
+                SizedBox(
+                  width: 46,
+                  child: Center(
+                    child: AppImage.avatar(
+                      url: user?.avatarUrl,
+                      size: 22,
+                      backgroundColor: ShadcnColors.secondary,
+                      errorIconSize: 12,
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      FluentIcons.chevron_right_24_regular,
-                      color: ShadcnColors.mutedForeground,
-                      size: 17,
-                    ),
-                    const SizedBox(width: 6),
-                    const Flexible(
-                      child: Text(
-                        'Add topic',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: ShadcnColors.mutedForeground,
-                          fontSize: AppFontSizes.bodySmall,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                TextField(
-                  controller: contentController,
-                  focusNode: focusNode,
-                  autofocus: true,
-                  keyboardType: TextInputType.multiline,
-                  textCapitalization: TextCapitalization.sentences,
-                  minLines: 1,
-                  maxLines: null,
-                  cursorColor: ShadcnColors.foreground,
-                  style: const TextStyle(
-                    color: ShadcnColors.foreground,
-                    fontSize: AppFontSizes.body,
-                    height: 1.35,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: "What's new?",
-                    hintStyle: TextStyle(
-                      color: ShadcnColors.mutedForeground,
-                      fontSize: AppFontSizes.body,
-                    ),
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                    contentPadding: EdgeInsets.only(top: 6, bottom: 10),
                   ),
                 ),
-                if (attachments.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _AttachmentStrip(
-                    attachments: attachments,
-                    onRemoveAttachment: onRemoveAttachment,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                _ComposerToolbar(onPickMedia: onPickMedia),
-                const SizedBox(height: 28),
                 const Text(
                   'Add to thread',
                   style: TextStyle(
@@ -420,7 +538,7 @@ class _ComposerToolbar extends StatelessWidget {
       runSpacing: 8,
       children: [
         _ComposerToolButton(
-          icon: FluentIcons.attach_24_regular,
+          icon: FluentIcons.image_sparkle_16_regular,
           onPressed: onPickMedia,
         ),
       ],
@@ -436,11 +554,11 @@ class _ComposerToolButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton(
-      minimumSize: const Size.square(38),
-      padding: EdgeInsets.zero,
+    return AppIconButton(
+      icon: icon,
       onPressed: onPressed,
-      child: Icon(icon, color: ShadcnColors.mutedForeground, size: 26),
+      size: AppButtonSize.sm,
+      child: Icon(icon, color: ShadcnColors.mutedForeground, size: 22),
     );
   }
 }
@@ -606,6 +724,7 @@ class _ComposerBottomBar extends StatelessWidget {
         MediaQuery.viewPaddingOf(context).bottom + 12,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Icon(
             FluentIcons.options_24_regular,
@@ -649,25 +768,11 @@ class _ComposerBottomBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          CupertinoButton(
-            minimumSize: const Size(0, 40),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            color: canPost ? ShadcnColors.primary : const Color(0xFFC7C7CC),
-            borderRadius: BorderRadius.circular(24),
-            onPressed: canPost && !isPosting ? onSubmit : null,
-            child: isPosting
-                ? const AppSpinner(
-                    size: 18,
-                    color: ShadcnColors.primaryForeground,
-                  )
-                : const Text(
-                    'Post',
-                    style: TextStyle(
-                      color: ShadcnColors.primaryForeground,
-                      fontSize: AppFontSizes.body,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+          AppButton(
+            onPressed: () => {onSubmit()},
+            text: "Post",
+            disabled: !canPost || isPosting,
+            isLoading: isPosting,
           ),
         ],
       ),

@@ -39,8 +39,8 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
         flavorConfigProvider.overrideWithValue(flavorConfig),
         queryClientProvider.overrideWithValue(queryClient),
       ],
-      child: QueryClientProvider(
-        create: (context) => QueryClient(),
+      child: QueryClientProvider.value(
+        queryClient,
         child: MyApp(appName: flavorConfig.appName),
       ),
     ),

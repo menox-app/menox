@@ -106,10 +106,10 @@ Map<String, dynamic> _$CreatePostBodyToJson(CreatePostBody instance) =>
 
 CreatePostMediaBody _$CreatePostMediaBodyFromJson(Map<String, dynamic> json) =>
     CreatePostMediaBody(
-      mediaId: json['media_id'] as String,
+      mediaId: json['mediaId'] as String,
       order: (json['order'] as num).toInt(),
     );
 
 Map<String, dynamic> _$CreatePostMediaBodyToJson(
   CreatePostMediaBody instance,
-) => <String, dynamic>{'media_id': instance.mediaId, 'order': instance.order};
+) => <String, dynamic>{'mediaId': instance.mediaId, 'order': instance.order};

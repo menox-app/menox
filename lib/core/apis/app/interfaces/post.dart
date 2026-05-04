@@ -122,7 +122,6 @@ bool? _boolFromJson(dynamic value) {
   return value.toString() == 'true' || value.toString() == '1';
 }
 
-
 // CREATE POST
 @JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
 class CreatePostBody implements BaseSerializable {
@@ -143,15 +142,12 @@ class CreatePostBody implements BaseSerializable {
   Map<String, dynamic> toJson() => _$CreatePostBodyToJson(this);
 }
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable()
 class CreatePostMediaBody {
   final String mediaId;
   final int order;
 
-  CreatePostMediaBody({
-    required this.mediaId,
-    required this.order,
-  });
+  CreatePostMediaBody({required this.mediaId, required this.order});
 
   factory CreatePostMediaBody.fromJson(Map<String, dynamic> json) =>
       _$CreatePostMediaBodyFromJson(json);

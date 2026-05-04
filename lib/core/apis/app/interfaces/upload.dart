@@ -45,6 +45,7 @@ class Upload extends BaseRecord<String> {
     return _$UploadFromJson({
       ...json,
       'id': json['id'] ?? json['_id'] ?? 'unknown',
+      'media_id': json['media_id'] ?? json['mediaId'],
     });
   }
 

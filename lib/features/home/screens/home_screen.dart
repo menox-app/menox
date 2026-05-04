@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/apis/app/index.dart';
-import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
 import 'package:flutter_core/core/hooks/use_auth.dart';
@@ -47,60 +46,8 @@ class HomeScreen extends HookConsumerWidget {
     final allPosts =
         postsQuery.data?.pages.expand((page) => page).toList() ?? [];
 
-    final dummyVideoPost = Post(
-      id: 'dummy_video_post_1',
-      createdAt: DateTime.now(),
-      author: Author(
-        id: 'dummy_author',
-        username: 'memox_dev',
-        displayName: 'Memox Developer',
-        avatarUrl: 'https://i.pravatar.cc/150?u=memox_dev',
-      ),
-      content:
-          'Here is a test video to see how the video player works in the new Threads-style layout.',
-      medias: [
-        Media(
-          id: 'dummy_media_1',
-          url:
-              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-          type: 'video',
-          postId: 'dummy_video_post_1',
-        ),
-      ],
-      likeCount: 420,
-      commentCount: 69,
-      repostCount: 12,
-      shareCount: 8,
-      highlightComments: [
-        Comment(
-          id: 'dummy_comment_1',
-          author: Author(
-            id: 'dummy_comment_author_1',
-            username: 'pixel_friend',
-            displayName: 'Pixel Friend',
-            avatarUrl: 'https://i.pravatar.cc/150?u=pixel_friend',
-          ),
-          content: 'This layout feels much closer to a real social feed.',
-          likeCount: 32,
-        ),
-        Comment(
-          id: 'dummy_comment_2',
-          author: Author(
-            id: 'dummy_comment_author_2',
-            username: 'ui_daily',
-            displayName: 'UI Daily',
-            avatarUrl: 'https://i.pravatar.cc/150?u=ui_daily',
-          ),
-          content: 'The video preview is smooth on my side.',
-          likeCount: 18,
-        ),
-      ],
-    );
-
     final isInitialLoading = postsQuery.isLoading && allPosts.isEmpty;
-    final displayPosts = isInitialLoading
-        ? <Post>[]
-        : [dummyVideoPost, ...allPosts];
+    final displayPosts = isInitialLoading ? <Post>[] : allPosts;
 
     final scrollController = useScrollController();
 

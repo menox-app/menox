@@ -72,22 +72,19 @@ class _AppButtonState extends State<AppButton>
         height: widget.height ?? _getHeight(),
         width: widget.width ?? (widget.fullWidth ? double.infinity : null),
         decoration: _getDecoration(),
-        child: Opacity(
-          opacity: widget.disabled ? 0.5 : 1.0,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(50),
-              onTapDown: widget.disabled ? null : (_) => _controller.forward(),
-              onTapUp: widget.disabled ? null : (_) => _controller.reverse(),
-              onTapCancel: widget.disabled ? null : () => _controller.reverse(),
-              onTap: (widget.isLoading || widget.disabled)
-                  ? null
-                  : widget.onPressed,
-              splashColor: _getSplashColor(),
-              highlightColor: Colors.transparent,
-              child: Padding(padding: _getPadding(), child: _buildContent()),
-            ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(50),
+            onTapDown: widget.disabled ? null : (_) => _controller.forward(),
+            onTapUp: widget.disabled ? null : (_) => _controller.reverse(),
+            onTapCancel: widget.disabled ? null : () => _controller.reverse(),
+            onTap: (widget.isLoading || widget.disabled)
+                ? null
+                : widget.onPressed,
+            splashColor: _getSplashColor(),
+            highlightColor: Colors.transparent,
+            child: Padding(padding: _getPadding(), child: _buildContent()),
           ),
         ),
       ),
@@ -97,22 +94,33 @@ class _AppButtonState extends State<AppButton>
   BoxDecoration? _getDecoration() {
     if (widget.variant == AppButtonVariant.link) return null;
 
+    final bool isDisabled = widget.disabled || widget.isLoading;
+
     switch (widget.variant) {
       case AppButtonVariant.primary:
         return BoxDecoration(
-          color: ShadcnColors.primary,
+          color: isDisabled
+              ? ShadcnColors.primary.withValues(alpha: 0.6)
+              : ShadcnColors.primary,
           borderRadius: BorderRadius.circular(50),
         );
       case AppButtonVariant.secondary:
         return BoxDecoration(
-          color: ShadcnColors.secondary,
+          color: isDisabled
+              ? ShadcnColors.secondary.withValues(alpha: 0.5)
+              : ShadcnColors.secondary,
           borderRadius: BorderRadius.circular(50),
         );
       case AppButtonVariant.outline:
         return BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(50),
-          border: Border.all(color: ShadcnColors.border, width: 1),
+          border: Border.all(
+            color: isDisabled
+                ? ShadcnColors.border.withValues(alpha: 0.5)
+                : ShadcnColors.border,
+            width: 1,
+          ),
         );
       case AppButtonVariant.ghost:
         return BoxDecoration(
@@ -121,7 +129,9 @@ class _AppButtonState extends State<AppButton>
         );
       case AppButtonVariant.destructive:
         return BoxDecoration(
-          color: ShadcnColors.destructive,
+          color: isDisabled
+              ? ShadcnColors.destructive.withValues(alpha: 0.5)
+              : ShadcnColors.destructive,
           borderRadius: BorderRadius.circular(50),
         );
       default:
