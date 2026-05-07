@@ -1,18 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
-import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/ui/widgets/app_text_field.dart';
-import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
-import 'package:flutter_core/features/auth/hooks/signup_provider.dart';
+import 'package:flutter_core/features/auth/providers/auth_provider.dart';
+import 'package:flutter_core/features/auth/providers/signup_provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_query/flutter_query.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -27,7 +24,8 @@ class RegisterScreen extends HookConsumerWidget {
     final theme = CupertinoTheme.of(context);
     final pageController = usePageController();
     final currentStep = useState(0);
-    final apiClient = AppApi.instance.auth;
+    final authAction = ref.watch(authActionProvider);
+    final authActionNotifier = ref.read(authActionProvider.notifier);
 
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
@@ -90,37 +88,6 @@ class RegisterScreen extends HookConsumerWidget {
     }
 
     final signUpNotifier = ref.read(signUpProvider.notifier);
-
-    final signUpMutation =
-        useMutation<
-          BaseResponse<SignUpResponse>,
-          dynamic,
-          ISignUpRequest,
-          void
-        >(
-          (input, ctx) => apiClient.signUp(input),
-          onSuccess: (data, variables, onMutateResult, mutationContext) {
-            ref
-                .read(authProvider.notifier)
-                .login(data.data.token, data.data.refreshToken);
-            signUpNotifier.reset();
-          },
-          onError: (error, variables, onMutateResult, mutationContext) {
-            showCupertinoDialog(
-              context: context,
-              builder: (ctx) => CupertinoAlertDialog(
-                title: const Text('Registration Failed'),
-                content: Text(error.toString()),
-                actions: [
-                  CupertinoDialogAction(
-                    child: const Text('OK'),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -265,20 +232,38 @@ class RegisterScreen extends HookConsumerWidget {
               title: "Pick Your Avatar",
               theme: theme,
               continueText: "Finish",
-              isLoading: signUpMutation.isPending,
+              isLoading: authAction.isLoading,
               onContinue: () {
                 final state = ref.read(signUpProvider);
-                signUpMutation.mutate(
-                  ISignUpRequest(
-                    body: SignUpBody(
-                      email: state.email,
-                      password: state.password,
-                      username: state.username,
-                      displayName: state.displayName,
-                      avatarUrl: state.avatar,
-                    ),
-                  ),
-                );
+                authActionNotifier
+                    .signUp(
+                      ISignUpRequest(
+                        body: SignUpBody(
+                          email: state.email,
+                          password: state.password,
+                          username: state.username,
+                          displayName: state.displayName,
+                          avatarUrl: state.avatar,
+                        ),
+                      ),
+                    )
+                    .then((_) => signUpNotifier.reset())
+                    .catchError((Object error) {
+                      if (!context.mounted) return;
+                      showCupertinoDialog(
+                        context: context,
+                        builder: (ctx) => CupertinoAlertDialog(
+                          title: const Text('Registration Failed'),
+                          content: Text(error.toString()),
+                          actions: [
+                            CupertinoDialogAction(
+                              child: const Text('OK'),
+                              onPressed: () => Navigator.pop(ctx),
+                            ),
+                          ],
+                        ),
+                      );
+                    });
               },
               child: Column(
                 children: [

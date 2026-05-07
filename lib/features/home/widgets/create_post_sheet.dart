@@ -5,16 +5,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/core/apis/app/providers.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/apis/app/interfaces/upload.dart';
-import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
-import 'package:flutter_query/flutter_query.dart';
+import 'package:flutter_core/features/home/providers/post_providers.dart';
+import 'package:flutter_core/features/user/providers/user_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
@@ -33,26 +33,6 @@ Future<void> showCreatePostSheet(BuildContext context) {
       builder: (context) => const CreatePostSheet(),
     ),
   );
-}
-
-InfiniteData<List<Post>, int> _prependPostToInfiniteData(
-  InfiniteData<List<Post>, int>? previous,
-  Post post,
-) {
-  if (previous == null || previous.pages.isEmpty) {
-    return InfiniteData<List<Post>, int>(
-      [
-        [post],
-      ],
-      const [1],
-    );
-  }
-
-  final pages = [...previous.pages];
-  final firstPage = pages.first.where((item) => item.id != post.id).toList();
-  pages[0] = [post, ...firstPage];
-
-  return InfiniteData<List<Post>, int>(pages, previous.pageParams);
 }
 
 enum _AttachmentType { image, video }
@@ -209,7 +189,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     setState(() => _isPosting = true);
     try {
       final medias = await _uploadAttachments();
-      final response = await api.posts.createPost(
+      final response = await ref.read(appApiProvider).posts.createPost(
         CreatePostBody(
           content: _contentController.text.trim(),
           visibility: 'public',
@@ -229,20 +209,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   void _prependPostToFeed(Post post) {
-    final queryClient = QueryClientProvider.of(context);
-
-    queryClient.setQueryData<InfiniteData<List<Post>, int>, dynamic>([
-      'posts',
-      'feed',
-    ], (previous) => _prependPostToInfiniteData(previous, post));
-
-    unawaited(
-      queryClient.invalidateQueries(
-        queryKey: ['posts', 'feed'],
-        exact: true,
-        refetchType: RefetchType.active,
-      ),
-    );
+    ref.read(feedPostsProvider.notifier).prependPost(post);
+    unawaited(ref.read(feedPostsProvider.notifier).refresh());
   }
 
   Future<List<CreatePostMediaBody>> _uploadAttachments() async {
@@ -252,11 +220,12 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       return File(attachment.file.path);
     }).toList();
 
+    final appApi = ref.read(appApiProvider);
     final response = files.length == 1
-        ? await api.upload.single(
+        ? await appApi.upload.single(
             IUploadSingleRequest(file: files.first, folder: 'posts'),
           )
-        : await api.upload.multiple(
+        : await appApi.upload.multiple(
             IUploadMultipleRequest(files: files, folder: 'posts'),
           );
 
@@ -432,7 +401,7 @@ class _ComposerBody extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = useAuth(ref).user;
+    final user = ref.watch(currentUserProvider);
     final username = user?.username.isNotEmpty == true
         ? user!.username
         : 'memox_user';
@@ -538,7 +507,11 @@ class _ComposerBody extends HookConsumerWidget {
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                      14, 10, 14, 10),
+                                    14,
+                                    10,
+                                    14,
+                                    10,
+                                  ),
                                   child: TextField(
                                     controller: contentController,
                                     focusNode: focusNode,
@@ -646,10 +619,7 @@ class _ComposerBody extends HookConsumerWidget {
             ),
           ],
           // ── Ephemeral info notice ──
-          if (isEphemeral) ...[
-            const SizedBox(height: 24),
-            _EphemeralNotice(),
-          ],
+          if (isEphemeral) ...[const SizedBox(height: 24), _EphemeralNotice()],
         ],
       ),
     );
@@ -1130,17 +1100,16 @@ class _DashedBubblePainter extends CustomPainter {
 
     path.moveTo(smallR, 0);
     path.lineTo(size.width - r, 0);
-    path.arcToPoint(Offset(size.width, r),
-        radius: Radius.circular(r));
+    path.arcToPoint(Offset(size.width, r), radius: Radius.circular(r));
     path.lineTo(size.width, size.height - r);
-    path.arcToPoint(Offset(size.width - r, size.height),
-        radius: Radius.circular(r));
+    path.arcToPoint(
+      Offset(size.width - r, size.height),
+      radius: Radius.circular(r),
+    );
     path.lineTo(r, size.height);
-    path.arcToPoint(Offset(0, size.height - r),
-        radius: Radius.circular(r));
+    path.arcToPoint(Offset(0, size.height - r), radius: Radius.circular(r));
     path.lineTo(0, smallR);
-    path.arcToPoint(Offset(smallR, 0),
-        radius: Radius.circular(smallR));
+    path.arcToPoint(Offset(smallR, 0), radius: Radius.circular(smallR));
     path.close();
 
     // Draw dashed path
@@ -1190,7 +1159,7 @@ class _EphemeralNoticeState extends State<_EphemeralNotice> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          const Expanded(
             child: Text(
               'Ephemeral posts auto-hide from the feed after 24 hours. '
               'Replies will be moved to messages. '

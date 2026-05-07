@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
-import 'package:flutter_query/flutter_query.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
@@ -12,8 +10,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
-import 'package:flutter_core/core/apis/base/interfaces/response.dart';
-import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
+import 'package:flutter_core/features/auth/providers/auth_provider.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 class LoginScreen extends HookConsumerWidget {
@@ -22,7 +19,8 @@ class LoginScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = CupertinoTheme.of(context);
-    final apiClient = AppApi.instance.auth;
+    final authAction = ref.watch(authActionProvider);
+    final authActionNotifier = ref.read(authActionProvider.notifier);
 
     final pageController = usePageController();
     final currentStep = useState(0);
@@ -66,37 +64,6 @@ class LoginScreen extends HookConsumerWidget {
         context.pop();
       }
     }
-
-    final loginMutation =
-        useMutation<
-          BaseResponse<SignInResponse>,
-          dynamic,
-          ISignInRequest,
-          void
-        >(
-          (input, context) => apiClient.signIn(input),
-          onSuccess: (data, variables, onMutateResult, mutationContext) {
-            ref
-                .read(authProvider.notifier)
-                .login(data.data.token, data.data.refreshToken);
-          },
-
-          onError: (error, variables, onMutateResult, mutationContext) {
-            showCupertinoDialog(
-              context: context,
-              builder: (context) => CupertinoAlertDialog(
-                title: const Text('Login Failed'),
-                content: Text(error.toString()),
-                actions: [
-                  CupertinoDialogAction(
-                    child: const Text('OK'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -155,20 +122,37 @@ class LoginScreen extends HookConsumerWidget {
                 validatePassword(passwordController.text);
                 if (passwordError.value == null &&
                     passwordController.text.isNotEmpty) {
-                  loginMutation.mutate(
-                    ISignInRequest(
-                      body: SignInBody(
-                        email: emailController.text,
-                        password: passwordController.text,
-                        provider: AuthProvider.password,
-                      ),
-                    ),
-                  );
+                  authActionNotifier
+                      .signIn(
+                        ISignInRequest(
+                          body: SignInBody(
+                            email: emailController.text,
+                            password: passwordController.text,
+                            provider: AuthProvider.password,
+                          ),
+                        ),
+                      )
+                      .catchError((Object error) {
+                        if (!context.mounted) return;
+                        showCupertinoDialog(
+                          context: context,
+                          builder: (context) => CupertinoAlertDialog(
+                            title: const Text('Login Failed'),
+                            content: Text(error.toString()),
+                            actions: [
+                              CupertinoDialogAction(
+                                child: const Text('OK'),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                        );
+                      });
                 }
               },
 
               theme: theme,
-              isLoading: loginMutation.isPending,
+              isLoading: authAction.isLoading,
               child: Column(
                 children: [
                   AppTextField(

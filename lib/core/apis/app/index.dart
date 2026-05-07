@@ -7,12 +7,10 @@ export 'package:flutter_core/core/apis/app/client/post.dart';
 export 'package:flutter_core/core/apis/app/client/auth.dart';
 export 'package:flutter_core/core/apis/app/client/upload.dart';
 
-/// API Client tập trung — giống `export const yaahApi = new YaahApiClient()` trong TypeScript.
-///
-/// Sử dụng:
+/// Sử dụng qua Riverpod:
 /// ```dart
+/// final api = ref.read(appApiProvider);
 /// final me = await api.auth.getMe();
-/// final org = await api.organizers.getCurrent();
 /// ```
 class AppApi {
   static late final AppApi _instance;
@@ -40,5 +38,3 @@ class AppApi {
   }
 }
 
-/// Shortcut toàn cục — dùng ở bất cứ đâu: `api.auth.signIn(body)`
-final api = AppApi.instance;

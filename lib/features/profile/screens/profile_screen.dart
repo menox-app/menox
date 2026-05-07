@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
-import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
+import 'package:flutter_core/features/auth/providers/auth_provider.dart';
 import 'package:flutter_core/features/profile/widgets/profile_widgets.dart';
+import 'package:flutter_core/features/user/providers/user_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ProfileScreen extends HookConsumerWidget {
@@ -12,8 +12,7 @@ class ProfileScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auth = useAuth(ref);
-    final user = auth.user;
+    final user = ref.watch(currentUserProvider);
 
     // Removal of forced dark mode override
     return CupertinoPageScaffold(

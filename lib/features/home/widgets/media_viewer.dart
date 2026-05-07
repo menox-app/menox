@@ -7,6 +7,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_core/core/utils/number_format_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
@@ -81,13 +82,6 @@ class _MediaViewerState extends State<MediaViewer> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  String _formatCount(num? count) {
-    if (count == null || count == 0) return '';
-    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
-    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}K';
-    return count.toString();
   }
 
   @override
@@ -241,7 +235,7 @@ class _MediaViewerState extends State<MediaViewer> {
   }
 
   Widget _actionItem({required IconData icon, num? count}) {
-    final label = _formatCount(count);
+    final label = NumberFormatUtils.compactCount(count);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

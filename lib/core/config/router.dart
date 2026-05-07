@@ -10,7 +10,7 @@ import 'package:flutter_core/features/activity/screens/activity_screen.dart';
 import 'package:flutter_core/features/profile/screens/profile_screen.dart';
 import 'package:flutter_core/features/home/screens/main_screen.dart';
 import 'package:flutter_core/features/home/screens/home_screen.dart';
-import 'package:flutter_core/features/auth/hooks/auth_provider.dart';
+import 'package:flutter_core/features/auth/providers/auth_provider.dart';
 
 /// Routes that only unauthenticated users should access.
 const _authRoutes = {'/welcome', '/login', '/register'};

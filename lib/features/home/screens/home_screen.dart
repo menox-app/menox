@@ -1,19 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_core/core/apis/app/index.dart';
-import 'package:flutter_core/core/apis/app/interfaces/post.dart';
-import 'package:flutter_core/core/apis/base/interfaces/request.dart';
-import 'package:flutter_core/core/hooks/use_auth.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/assets/app_icons.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/features/home/providers/post_providers.dart';
 import 'package:flutter_core/features/home/widgets/create_post_sheet.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
+import 'package:flutter_core/features/user/providers/user_provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_query/flutter_query.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -22,32 +19,11 @@ class HomeScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final apiClient = AppApi.instance;
-    final user = useAuth(ref).user;
+    final user = ref.watch(currentUserProvider);
     final theme = CupertinoTheme.of(context);
-    final postsQuery = useInfiniteQuery<List<Post>, dynamic, int>(
-      ['posts', 'feed'],
-      (context) async {
-        final page = context.pageParam;
-        final response = await apiClient.posts.getAll(
-          BasePaginationRequest(page: page, limit: 10),
-        );
-        return response.data;
-      },
-      initialPageParam: 1,
-      nextPageParamBuilder: (data) {
-        final lastPage = data.pages.last;
-        if (lastPage.isEmpty || lastPage.length < 10) return null;
-        return data.pages.length + 1;
-      },
-    );
-
-    // Flatten all pages into single list
-    final allPosts =
-        postsQuery.data?.pages.expand((page) => page).toList() ?? [];
-
-    final isInitialLoading = postsQuery.isLoading && allPosts.isEmpty;
-    final displayPosts = isInitialLoading ? <Post>[] : allPosts;
+    final postsAsync = ref.watch(feedPostsProvider);
+    final postsNotifier = ref.read(feedPostsProvider.notifier);
+    final postsState = postsAsync.valueOrNull;
 
     final scrollController = useScrollController();
 
@@ -56,16 +32,20 @@ class HomeScreen extends HookConsumerWidget {
         void onScroll() {
           if (scrollController.position.pixels >=
                   scrollController.position.maxScrollExtent - 200 &&
-              postsQuery.hasNextPage &&
-              !postsQuery.isFetchingNextPage) {
-            postsQuery.fetchNextPage();
+              postsState?.hasNextPage == true &&
+              postsState?.isFetchingNextPage != true) {
+            postsNotifier.fetchNextPage();
           }
         }
 
         scrollController.addListener(onScroll);
         return () => scrollController.removeListener(onScroll);
       },
-      [scrollController, postsQuery.hasNextPage, postsQuery.isFetchingNextPage],
+      [
+        scrollController,
+        postsState?.hasNextPage,
+        postsState?.isFetchingNextPage,
+      ],
     );
 
     return CupertinoPageScaffold(
@@ -163,88 +143,107 @@ class HomeScreen extends HookConsumerWidget {
 
           CupertinoSliverRefreshControl(
             onRefresh: () async {
-              await postsQuery.refetch();
+              await postsNotifier.refresh();
             },
           ),
-          if (isInitialLoading)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => const PostCardSkeleton(),
-                childCount: 5,
-              ),
-            )
-          else if (displayPosts.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: ShadcnColors.secondary,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(
-                        FluentIcons.image_24_regular,
-                        size: 28,
-                        color: ShadcnColors.mutedForeground,
+
+          ...postsAsync.when(
+            skipLoadingOnRefresh: true,
+            data: (postsState) {
+              final posts = postsState.items;
+              return [
+                if (posts.isEmpty)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: ShadcnColors.secondary,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: const Icon(
+                              FluentIcons.image_24_regular,
+                              size: 28,
+                              color: ShadcnColors.mutedForeground,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Your feed is empty',
+                            style: theme.textTheme.textStyle.copyWith(
+                              fontSize: AppFontSizes.body,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Follow friends to see their memes here.',
+                            style: theme.textTheme.textStyle.copyWith(
+                              fontSize: AppFontSizes.meta,
+                              color: ShadcnColors.mutedForeground,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Your feed is empty',
-                      style: theme.textTheme.textStyle.copyWith(
-                        fontSize: AppFontSizes.body,
-                        fontWeight: FontWeight.w600,
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return PostCard(post: posts[index]);
+                    }, childCount: posts.length),
+                  ),
+                if (postsState.isFetchingNextPage)
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const PostCardSkeleton(),
+                      childCount: 2,
+                    ),
+                  ),
+                if (!postsState.hasNextPage && posts.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          "You're all caught up",
+                          style: theme.textTheme.textStyle.copyWith(
+                            fontSize: AppFontSizes.meta,
+                            color: ShadcnColors.mutedForeground,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Follow friends to see their memes here.',
-                      style: theme.textTheme.textStyle.copyWith(
-                        fontSize: AppFontSizes.meta,
-                        color: ShadcnColors.mutedForeground,
-                      ),
-                    ),
-                  ],
+                  ),
+              ];
+            },
+            loading: () => [
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const PostCardSkeleton(),
+                  childCount: 5,
                 ),
               ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                if (index < displayPosts.length) {
-                  return PostCard(post: displayPosts[index]);
-                }
-                return null;
-              }, childCount: displayPosts.length),
-            ),
-
-          if (postsQuery.isFetchingNextPage)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => const PostCardSkeleton(),
-                childCount: 2,
-              ),
-            ),
-
-          if (!postsQuery.hasNextPage && allPosts.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+            ],
+            error: (error, stackTrace) => [
+              SliverFillRemaining(
                 child: Center(
                   child: Text(
-                    "You're all caught up",
+                    error.toString(),
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.textStyle.copyWith(
-                      fontSize: AppFontSizes.meta,
                       color: ShadcnColors.mutedForeground,
+                      fontSize: AppFontSizes.bodySmall,
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
 
           // Bottom padding for the floating nav bar
           const SliverToBoxAdapter(child: SizedBox(height: 80)),

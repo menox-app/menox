@@ -4,6 +4,8 @@ import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
+import 'package:flutter_core/core/utils/date_time_utils.dart';
+import 'package:flutter_core/core/utils/number_format_utils.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CommentCard extends StatelessWidget {
@@ -11,28 +13,6 @@ class CommentCard extends StatelessWidget {
   final bool isLast;
 
   const CommentCard({super.key, required this.comment, this.isLast = false});
-
-  String _timeAgo(DateTime? date) {
-    if (date == null) return '';
-    final diff = DateTime.now().difference(date);
-    if (diff.inSeconds < 60) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w';
-    return '${(diff.inDays / 30).floor()}mo';
-  }
-
-  String _formatCount(num? count) {
-    if (count == null || count == 0) return '';
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    }
-    if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +66,7 @@ class CommentCard extends StatelessWidget {
                       if (comment.createdAt != null) ...[
                         const SizedBox(width: 6),
                         Text(
-                          _timeAgo(comment.createdAt),
+                          DateTimeUtils.relativeShort(comment.createdAt),
                           style: const TextStyle(
                             fontSize: AppFontSizes.meta,
                             color: ShadcnColors.mutedForeground,
@@ -177,7 +157,7 @@ class CommentCard extends StatelessWidget {
             if (count != null && count > 0) ...[
               const SizedBox(width: 4),
               Text(
-                _formatCount(count),
+                NumberFormatUtils.compactCount(count),
                 style: TextStyle(
                   fontSize: AppFontSizes.caption,
                   color: color,

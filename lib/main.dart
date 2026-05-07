@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_query/flutter_query.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_core/core/theme/app_theme.dart';
@@ -27,7 +26,6 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
 
   final prefs = await SharedPreferences.getInstance();
   final localStorage = LocalStorage(prefs);
-  final queryClient = QueryClient();
 
   // Khởi tạo API SDK
   AppApi.initialize(baseUrl: flavorConfig.baseUrl, localStorage: localStorage);
@@ -37,19 +35,11 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
       overrides: [
         localStorageProvider.overrideWithValue(localStorage),
         flavorConfigProvider.overrideWithValue(flavorConfig),
-        queryClientProvider.overrideWithValue(queryClient),
       ],
-      child: QueryClientProvider.value(
-        queryClient,
-        child: MyApp(appName: flavorConfig.appName),
-      ),
+      child: MyApp(appName: flavorConfig.appName),
     ),
   );
 }
-
-final queryClientProvider = Provider<QueryClient>(
-  (ref) => throw UnimplementedError(),
-);
 
 class MyApp extends ConsumerWidget {
   final String appName;

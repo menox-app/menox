@@ -1,0 +1,41 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'auth_provider.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+String _$authHash() => r'd056d13ffc9448eebee15d76417e1f750b594aab';
+
+/// See also [Auth].
+@ProviderFor(Auth)
+final authProvider = NotifierProvider<Auth, AuthState>.internal(
+  Auth.new,
+  name: r'authProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$authHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$Auth = Notifier<AuthState>;
+String _$authActionHash() => r'47ca1cd97ae1eda2718abf827088298070fdb836';
+
+/// See also [AuthAction].
+@ProviderFor(AuthAction)
+final authActionProvider =
+    AutoDisposeAsyncNotifierProvider<AuthAction, void>.internal(
+      AuthAction.new,
+      name: r'authActionProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$authActionHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$AuthAction = AutoDisposeAsyncNotifier<void>;
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

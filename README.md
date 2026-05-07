@@ -27,7 +27,7 @@
 - **Framework**: [Flutter](https://flutter.dev) (v3.x) - Multi-platform excellence.
 - **State Management**: [Riverpod](https://riverpod.dev) - Robust, testable, and type-safe.
 - **Networking**: [Dio](https://pub.dev/packages/dio) & [Retrofit](https://pub.dev/packages/retrofit) - Type-safe REST API integration.
-- **Caching & Synchronization**: [Flutter Query](https://pub.dev/packages/flutter_query) - Advanced data fetching and cache management.
+- **Server State**: Riverpod notifiers over the SDK API client for loading, caching, optimistic updates, and pagination.
 - **Persistence**: [Hive](https://pub.dev/packages/hive) & [Shared Preferences](https://pub.dev/packages/shared_preferences) - High-performance local storage.
 - **Environment Management**: [Envied](https://pub.dev/packages/envied) - Secure, obfuscated environment configuration.
 

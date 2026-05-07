@@ -1,16 +1,13 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_core/core/apis/app/index.dart';
-import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
+import 'package:flutter_core/features/home/providers/post_providers.dart';
 import 'package:flutter_core/features/home/widgets/comment_card.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_query/flutter_query.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class PostDetailScreen extends HookConsumerWidget {
@@ -20,40 +17,20 @@ class PostDetailScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final apiClient = AppApi.instance;
     final theme = CupertinoTheme.of(context);
     final scrollController = useScrollController();
-
-    final commentsQuery = useInfiniteQuery<List<Comment>, dynamic, int>(
-      ['comments', post.id],
-      (context) async {
-        final page = context.pageParam;
-        final response = await apiClient.posts.getComments(
-          IGetCommentsRequest(id: post.id, page: page, limit: 10),
-        );
-        return response.data;
-      },
-      initialPageParam: 1,
-      nextPageParamBuilder: (data) {
-        final lastPage = data.pages.last;
-        if (lastPage.isEmpty || lastPage.length < 10) return null;
-        return data.pages.length + 1;
-      },
-    );
-
-    final allComments =
-        commentsQuery.data?.pages.expand((page) => page).toList() ?? [];
-
-    final isInitialLoading = commentsQuery.isLoading && allComments.isEmpty;
+    final commentsAsync = ref.watch(commentsProvider(post.id));
+    final commentsNotifier = ref.read(commentsProvider(post.id).notifier);
+    final commentsState = commentsAsync.valueOrNull;
 
     useEffect(
       () {
         void onScroll() {
           if (scrollController.position.pixels >=
                   scrollController.position.maxScrollExtent - 200 &&
-              commentsQuery.hasNextPage &&
-              !commentsQuery.isFetchingNextPage) {
-            commentsQuery.fetchNextPage();
+              commentsState?.hasNextPage == true &&
+              commentsState?.isFetchingNextPage != true) {
+            commentsNotifier.fetchNextPage();
           }
         }
 
@@ -62,8 +39,8 @@ class PostDetailScreen extends HookConsumerWidget {
       },
       [
         scrollController,
-        commentsQuery.hasNextPage,
-        commentsQuery.isFetchingNextPage,
+        commentsState?.hasNextPage,
+        commentsState?.isFetchingNextPage,
       ],
     );
 
@@ -126,59 +103,79 @@ class PostDetailScreen extends HookConsumerWidget {
         ),
         slivers: [
           // Post Detail
-          SliverToBoxAdapter(
-            child: PostCard(post: post, isDetail: true),
-          ),
+          SliverToBoxAdapter(child: PostCard(post: post, isDetail: true)),
 
           // Pull to refresh
           CupertinoSliverRefreshControl(
             onRefresh: () async {
-              await commentsQuery.refetch();
+              await commentsNotifier.refresh();
             },
           ),
 
-          if (isInitialLoading)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => const CommentCardSkeleton(),
-                childCount: 5,
+          ...commentsAsync.when(
+            skipLoadingOnRefresh: true,
+            data: (commentsState) {
+              final comments = commentsState.items;
+              return [
+                if (comments.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: Center(
+                        child: Text(
+                          'No comments yet.',
+                          style: theme.textTheme.textStyle.copyWith(
+                            fontSize: AppFontSizes.bodySmall,
+                            color: ShadcnColors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return CommentCard(
+                        comment: comments[index],
+                        isLast: index == comments.length - 1,
+                      );
+                    }, childCount: comments.length),
+                  ),
+                if (commentsState.isFetchingNextPage)
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const CommentCardSkeleton(),
+                      childCount: 2,
+                    ),
+                  ),
+              ];
+            },
+            loading: () => [
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const CommentCardSkeleton(),
+                  childCount: 5,
+                ),
               ),
-            )
-          else if (allComments.isEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: Center(
-                  child: Text(
-                    'No comments yet.',
-                    style: theme.textTheme.textStyle.copyWith(
-                      fontSize: AppFontSizes.bodySmall,
-                      color: ShadcnColors.mutedForeground,
+            ],
+            error: (error, stackTrace) => [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Center(
+                    child: Text(
+                      error.toString(),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.textStyle.copyWith(
+                        fontSize: AppFontSizes.bodySmall,
+                        color: ShadcnColors.mutedForeground,
+                      ),
                     ),
                   ),
                 ),
               ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return CommentCard(
-                    comment: allComments[index],
-                    isLast: index == allComments.length - 1,
-                  );
-                },
-                childCount: allComments.length,
-              ),
-            ),
-
-          if (commentsQuery.isFetchingNextPage)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => const CommentCardSkeleton(),
-                childCount: 2,
-              ),
-            ),
+            ],
+          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 60)),
         ],

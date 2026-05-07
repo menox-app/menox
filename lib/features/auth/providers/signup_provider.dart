@@ -1,6 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_core/core/utils/string_utils.dart';
 import 'package:flutter_core/core/constants/avatar_constants.dart';
+import 'package:flutter_core/core/utils/string_utils.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'signup_provider.g.dart';
 
 class SignUpState {
   final String email;
@@ -40,15 +42,21 @@ class SignUpState {
   String get displayName => "$firstName $lastName".trim();
 }
 
-class SignUpNotifier extends StateNotifier<SignUpState> {
-  SignUpNotifier() : super(SignUpState(avatar: AvatarConstants.defaultAvatar));
+@riverpod
+class SignUp extends _$SignUp {
+  @override
+  SignUpState build() {
+    return SignUpState(avatar: AvatarConstants.defaultAvatar);
+  }
 
   void updateEmail(String email) => state = state.copyWith(email: email);
-  void updatePassword(String password) =>
-      state = state.copyWith(password: password);
+
+  void updatePassword(String password) {
+    state = state.copyWith(password: password);
+  }
+
   void updateName(String first, String last) {
     state = state.copyWith(firstName: first, lastName: last);
-    // Auto-generate username suggestion if empty
     if (state.username.isEmpty) {
       final cleanFirst = StringUtils.removeDiacritics(first.toLowerCase());
       final cleanLast = StringUtils.removeDiacritics(last.toLowerCase());
@@ -57,16 +65,15 @@ class SignUpNotifier extends StateNotifier<SignUpState> {
     }
   }
 
-  void updateUsername(String username) =>
-      state = state.copyWith(username: username);
+  void updateUsername(String username) {
+    state = state.copyWith(username: username);
+  }
 
-  void updateAvatar(String avatar) => state = state.copyWith(avatar: avatar);
+  void updateAvatar(String avatar) {
+    state = state.copyWith(avatar: avatar);
+  }
 
-  void reset() => state = SignUpState(avatar: AvatarConstants.defaultAvatar);
+  void reset() {
+    state = SignUpState(avatar: AvatarConstants.defaultAvatar);
+  }
 }
-
-final signUpProvider = StateNotifierProvider<SignUpNotifier, SignUpState>((
-  ref,
-) {
-  return SignUpNotifier();
-});
