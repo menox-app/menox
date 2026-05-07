@@ -7,6 +7,7 @@ import 'package:flutter_core/core/storage/local_storage.dart';
 import 'package:flutter_core/core/config/router.dart';
 import 'package:flutter_core/core/config/flavor_config.dart';
 import 'package:flutter_core/core/apis/app/index.dart';
+import 'package:flutter_core/features/auth/providers/auth_provider.dart';
 
 import 'package:flutter_core/core/config/env.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -47,6 +48,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(authProvider);
     final router = ref.watch(routerProvider);
 
     return CupertinoApp.router(

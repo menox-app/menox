@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_core/core/apis/app/client/auth.dart';
 import 'package:flutter_core/core/apis/app/client/post.dart';
 import 'package:flutter_core/core/apis/app/client/upload.dart';
@@ -13,7 +14,7 @@ export 'package:flutter_core/core/apis/app/client/upload.dart';
 /// final me = await api.auth.getMe();
 /// ```
 class AppApi {
-  static late final AppApi _instance;
+  static late AppApi _instance;
   static AppApi get instance => _instance;
 
   final AuthApiClient auth;
@@ -29,12 +30,13 @@ class AppApi {
   static void initialize({
     required String baseUrl,
     required LocalStorage localStorage,
+    HttpClientAdapter? httpClientAdapter,
   }) {
     DioFactory.initialize(
       apiBaseUrl: '$baseUrl/api/v1',
       localStorage: localStorage,
+      httpClientAdapter: httpClientAdapter,
     );
     _instance = AppApi._();
   }
 }
-

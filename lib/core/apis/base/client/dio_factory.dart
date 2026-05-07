@@ -1,32 +1,32 @@
-import 'dart:ui';
+import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_core/core/config/app_config.dart';
 import 'package:flutter_core/core/storage/local_storage.dart';
 
-/// Factory tạo Dio instance cho từng resource.
-/// Khởi tạo 1 lần trong main.dart, dùng toàn app qua [DioFactory.instance].
-///
-/// Tương đương YaahCrudApiClient constructor trong TypeScript:
-/// - Mỗi resource nhận Dio riêng với baseUrl đã chứa resource path
-/// - Interceptors: Auth (+ refresh token), Response unwrap, Error format
 class DioFactory {
+  static const String _retryKey = '_retry';
+
   static late DioFactory _instance;
   static DioFactory get instance => _instance;
   static bool _initialized = false;
 
   final String apiBaseUrl;
   final LocalStorage _localStorage;
+  final HttpClientAdapter? _httpClientAdapter;
 
-  /// Callback khi auth thất bại (refresh token fail) → UI redirect login.
-  /// AuthNotifier tự đăng ký callback này khi được tạo.
   static VoidCallback? onAuthFailure;
 
-  /// Dio riêng chỉ để gọi refresh token — KHÔNG gắn auth interceptor (tránh loop)
   late final Dio _refreshDio;
+  Future<String>? _refreshTokenFuture;
 
-  DioFactory._({required this.apiBaseUrl, required LocalStorage localStorage})
-    : _localStorage = localStorage {
+  DioFactory._({
+    required this.apiBaseUrl,
+    required LocalStorage localStorage,
+    HttpClientAdapter? httpClientAdapter,
+  }) : _localStorage = localStorage,
+       _httpClientAdapter = httpClientAdapter {
     _refreshDio = Dio(
       BaseOptions(
         baseUrl: '$apiBaseUrl/auth',
@@ -34,26 +34,31 @@ class DioFactory {
         receiveTimeout: AppConfig.receiveTimeout,
       ),
     );
-    // Response interceptor cho refresh Dio
-    _refreshDio.interceptors.add(_responseInterceptor());
+    final httpClientAdapter = _httpClientAdapter;
+    if (httpClientAdapter != null) {
+      _refreshDio.httpClientAdapter = httpClientAdapter;
+    }
+    _refreshDio.interceptors.addAll([
+      if (kDebugMode) _debugLogInterceptor(),
+      _responseInterceptor(),
+    ]);
   }
 
-  /// Gọi 1 lần duy nhất khi app khởi động
   static void initialize({
     required String apiBaseUrl,
     required LocalStorage localStorage,
+    HttpClientAdapter? httpClientAdapter,
   }) {
     _instance = DioFactory._(
       apiBaseUrl: apiBaseUrl,
       localStorage: localStorage,
+      httpClientAdapter: httpClientAdapter,
     );
     _initialized = true;
   }
 
-  /// Kiểm tra đã khởi tạo chưa
   static bool get isInitialized => _initialized;
 
-  /// Tạo Dio instance cho 1 resource — đã gắn đầy đủ interceptors
   Dio create(String resource) {
     final dio = Dio(
       BaseOptions(
@@ -62,18 +67,22 @@ class DioFactory {
         receiveTimeout: AppConfig.receiveTimeout,
       ),
     );
+    final httpClientAdapter = _httpClientAdapter;
+    if (httpClientAdapter != null) {
+      dio.httpClientAdapter = httpClientAdapter;
+    }
 
-    dio.interceptors.addAll([_authInterceptor(dio), _responseInterceptor()]);
+    dio.interceptors.addAll([
+      _authInterceptor(dio),
+      if (kDebugMode) _debugLogInterceptor(),
+      _responseInterceptor(),
+    ]);
 
     return dio;
   }
 
-  /// Getter để các client có thể truy cập localStorage khi cần
   LocalStorage get localStorage => _localStorage;
 
-  // ─────────────────────────────────────────────────────────────
-  // Auth Interceptor + Refresh Token (QueuedInterceptor)
-  // ─────────────────────────────────────────────────────────────
   QueuedInterceptorsWrapper _authInterceptor(Dio dio) {
     return QueuedInterceptorsWrapper(
       onRequest: (options, handler) {
@@ -84,37 +93,31 @@ class DioFactory {
         handler.next(options);
       },
       onError: (error, handler) async {
-        // Chỉ xử lý 401 Unauthorized
         if (error.response?.statusCode != 401) {
           return handler.next(error);
         }
 
-        // --- Refresh Token Flow ---
+        final requestOptions = error.requestOptions;
+        if (requestOptions.extra[_retryKey] == true) {
+          return handler.next(error);
+        }
+
         try {
-          final refreshToken = _localStorage.getRefreshToken();
-          if (refreshToken == null) throw Exception('No refresh token');
+          final currentToken = _localStorage.getToken();
+          final requestToken = requestOptions.headers['Authorization'];
+          if (currentToken != null && requestToken != 'Bearer $currentToken') {
+            final retry = await _retryRequest(
+              dio,
+              requestOptions,
+              currentToken,
+            );
+            return handler.resolve(retry);
+          }
 
-          final res = await _refreshDio.post(
-            '/refresh',
-            data: {'refresh_token': refreshToken},
-          );
-
-          final data = res.data['data'];
-          final newToken = data['access_token'] as String;
-          final newRefresh = data['refresh_token'] as String;
-
-          // Lưu tokens mới
-          await _localStorage.saveTokens(
-            accessToken: newToken,
-            refreshToken: newRefresh,
-          );
-
-          // Retry request gốc với token mới
-          error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-          final retry = await dio.fetch(error.requestOptions);
+          final newToken = await _refreshAccessToken();
+          final retry = await _retryRequest(dio, requestOptions, newToken);
           return handler.resolve(retry);
         } catch (_) {
-          // Refresh thất bại → clear tokens + thông báo UI
           await _localStorage.clearAll();
           onAuthFailure?.call();
           return handler.reject(error);
@@ -123,29 +126,113 @@ class DioFactory {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Response Interceptor: Unwrap & Error Format
-  // ─────────────────────────────────────────────────────────────
+  Future<String> _refreshAccessToken() {
+    final inFlight = _refreshTokenFuture;
+    if (inFlight != null) return inFlight;
+
+    final future = _performRefreshToken();
+    _refreshTokenFuture = future;
+    return future.whenComplete(() {
+      if (identical(_refreshTokenFuture, future)) {
+        _refreshTokenFuture = null;
+      }
+    });
+  }
+
+  Future<String> _performRefreshToken() async {
+    final refreshToken = _localStorage.getRefreshToken();
+    if (refreshToken == null) throw Exception('No refresh token');
+
+    final res = await _refreshDio.post(
+      '/refresh',
+      data: {'refresh_token': refreshToken},
+    );
+
+    final responseData = _asMap(res.data);
+    final data = _asMap(responseData['data']);
+    final newToken = data['access_token'] as String?;
+    final newRefresh = data['refresh_token'] as String?;
+
+    if (newToken == null || newRefresh == null) {
+      throw StateError('Refresh response missing tokens');
+    }
+
+    await _localStorage.saveTokens(
+      accessToken: newToken,
+      refreshToken: newRefresh,
+    );
+
+    return newToken;
+  }
+
+  Future<Response<dynamic>> _retryRequest(
+    Dio dio,
+    RequestOptions requestOptions,
+    String accessToken,
+  ) {
+    final headers = Map<String, dynamic>.from(requestOptions.headers)
+      ..['Authorization'] = 'Bearer $accessToken';
+    final extra = Map<String, dynamic>.from(requestOptions.extra)
+      ..[_retryKey] = true;
+
+    final retryOptions = requestOptions.copyWith(
+      data: _cloneDataForRetry(requestOptions.data),
+      headers: headers,
+      extra: extra,
+    );
+    final retryDio = Dio(dio.options)
+      ..httpClientAdapter = dio.httpClientAdapter;
+    retryDio.interceptors.addAll([
+      if (kDebugMode) _debugLogInterceptor(),
+      _responseInterceptor(),
+    ]);
+
+    return retryDio.fetch<dynamic>(retryOptions);
+  }
+
+  dynamic _cloneDataForRetry(dynamic data) {
+    if (data is FormData) return data.clone();
+    return data;
+  }
+
+  InterceptorsWrapper _debugLogInterceptor() {
+    return InterceptorsWrapper(
+      onRequest: (options, handler) {
+        debugPrint('[DIO] --> ${options.method} ${options.uri}');
+        handler.next(options);
+      },
+      onResponse: (response, handler) {
+        debugPrint(
+          '[DIO] <-- ${response.statusCode} '
+          '${response.requestOptions.method} ${response.requestOptions.uri}',
+        );
+        handler.next(response);
+      },
+      onError: (error, handler) {
+        debugPrint(
+          '[DIO] !! ${error.response?.statusCode ?? error.type} '
+          '${error.requestOptions.method} ${error.requestOptions.uri} '
+          '${error.message}',
+        );
+        handler.next(error);
+      },
+    );
+  }
+
   InterceptorsWrapper _responseInterceptor() {
     return InterceptorsWrapper(
       onResponse: (response, handler) {
         final rawData = response.data;
 
-        // Null thì skip
         if (rawData == null) return handler.next(response);
 
-        // Wrap Map nếu thiếu key 'data'
         if (rawData is Map<String, dynamic>) {
           if (!rawData.containsKey('data')) {
             response.data = {'data': rawData};
           }
-        }
-        // Wrap List vào 'data' key
-        else if (rawData is List) {
+        } else if (rawData is List) {
           response.data = {'data': rawData};
-        }
-        // Wrap các kiểu khác (String, etc.)
-        else {
+        } else {
           response.data = {'data': rawData};
         }
 
@@ -185,5 +272,11 @@ class DioFactory {
         );
       },
     );
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return {};
   }
 }

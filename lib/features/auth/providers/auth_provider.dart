@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_core/core/apis/app/interfaces/auth.dart';
 import 'package:flutter_core/core/apis/app/interfaces/user.dart';
 import 'package:flutter_core/core/apis/app/providers.dart';
@@ -38,14 +40,14 @@ class Auth extends _$Auth {
     _storage = ref.read(localStorageProvider);
     DioFactory.onAuthFailure = _handleAuthFailure;
 
+    final token = _storage.getToken();
     final authState = AuthState(
-      status: _storage.getToken() != null
-          ? AuthStatus.authenticated
-          : AuthStatus.unauthenticated,
+      status: token != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
     );
 
     if (authState.isAuthenticated) {
-      unawaited(_syncUserInBackground());
+      // Background sync to validate token and refresh profile
+      Future<void>.delayed(Duration.zero, _syncUserInBackground);
     }
 
     return authState;
@@ -58,21 +60,42 @@ class Auth extends _$Auth {
   }
 
   Future<void> _syncUserInBackground() async {
+    await _loadCachedUser();
+    await _fetchFreshUser();
+  }
+
+  Future<void> _loadCachedUser() async {
     try {
-      // Hiện cached user ngay lập tức
       final cached = _storage.getCachedUserJson();
       if (cached != null) {
         ref.read(currentUserProvider.notifier).setUser(User.fromJson(cached));
       }
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Cached user parse failed: $error');
+      }
+      await _storage.clearCachedUser();
+    }
+  }
 
-      // Fetch fresh user từ API
+  Future<void> _fetchFreshUser() async {
+    if (_storage.getToken() == null) return;
+
+    try {
       final response = await ref.read(appApiProvider).auth.getMe();
       final user = response.data;
       await _storage.saveUserProfile(user.toJson());
       ref.read(currentUserProvider.notifier).setUser(user);
-    } catch (_) {
-      // Nếu API fail nhưng có cache → giữ nguyên cached user
-      // Nếu không có cache → để null (user chưa có profile)
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401) {
+        _handleAuthFailure();
+      } else if (kDebugMode) {
+        debugPrint('/auth/me failed: ${error.message}');
+      }
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('/auth/me failed: $error');
+      }
     }
   }
 
