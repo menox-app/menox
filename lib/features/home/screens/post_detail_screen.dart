@@ -9,6 +9,7 @@ import 'package:flutter_core/features/home/widgets/comment_card.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
 
 class PostDetailScreen extends HookConsumerWidget {
   final Post post;
@@ -44,8 +45,7 @@ class PostDetailScreen extends HookConsumerWidget {
       ],
     );
 
-    return CupertinoPageScaffold(
-      backgroundColor: ShadcnColors.background,
+    return AppScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: ShadcnColors.background,
         border: const Border(
@@ -95,91 +95,84 @@ class PostDetailScreen extends HookConsumerWidget {
             ),
           ],
         ),
-      ),
-      child: CustomScrollView(
-        controller: scrollController,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
+      ),     
+      controller: scrollController,
+      slivers: [
+        // Post Detail
+        SliverToBoxAdapter(child: PostCard(post: post, isDetail: true)),
+
+        // Pull to refresh
+        CupertinoSliverRefreshControl(
+          onRefresh: () async {
+            await commentsNotifier.refresh();
+          },
         ),
-        slivers: [
-          // Post Detail
-          SliverToBoxAdapter(child: PostCard(post: post, isDetail: true)),
 
-          // Pull to refresh
-          CupertinoSliverRefreshControl(
-            onRefresh: () async {
-              await commentsNotifier.refresh();
-            },
-          ),
-
-          ...commentsAsync.when(
-            skipLoadingOnRefresh: true,
-            data: (commentsState) {
-              final comments = commentsState.items;
-              return [
-                if (comments.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 40),
-                      child: Center(
-                        child: Text(
-                          'No comments yet.',
-                          style: theme.textTheme.textStyle.copyWith(
-                            fontSize: AppFontSizes.bodySmall,
-                            color: ShadcnColors.mutedForeground,
-                          ),
+        ...commentsAsync.when(
+          skipLoadingOnRefresh: true,
+          data: (commentsState) {
+            final comments = commentsState.items;
+            return [
+              if (comments.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Center(
+                      child: Text(
+                        'No comments yet.',
+                        style: theme.textTheme.textStyle.copyWith(
+                          fontSize: AppFontSizes.bodySmall,
+                          color: ShadcnColors.mutedForeground,
                         ),
                       ),
                     ),
-                  )
-                else
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return CommentCard(
-                        comment: comments[index],
-                        isLast: index == comments.length - 1,
-                      );
-                    }, childCount: comments.length),
                   ),
-                if (commentsState.isFetchingNextPage)
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => const CommentCardSkeleton(),
-                      childCount: 2,
-                    ),
-                  ),
-              ];
-            },
-            loading: () => [
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => const CommentCardSkeleton(),
-                  childCount: 5,
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return CommentCard(
+                      comment: comments[index],
+                      isLast: index == comments.length - 1,
+                    );
+                  }, childCount: comments.length),
                 ),
-              ),
-            ],
-            error: (error, stackTrace) => [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: Center(
-                    child: Text(
-                      error.toString(),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.textStyle.copyWith(
-                        fontSize: AppFontSizes.bodySmall,
-                        color: ShadcnColors.mutedForeground,
-                      ),
-                    ),
+              if (commentsState.isFetchingNextPage)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const CommentCardSkeleton(),
+                    childCount: 2,
                   ),
                 ),
+            ];
+          },
+          loading: () => [
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => const CommentCardSkeleton(),
+                childCount: 5,
               ),
-            ],
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 60)),
-        ],
-      ),
+            ),
+          ],
+          error: (error, stackTrace) => [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: Center(
+                  child: Text(
+                    error.toString(),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.textStyle.copyWith(
+                      fontSize: AppFontSizes.bodySmall,
+                      color: ShadcnColors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
