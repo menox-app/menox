@@ -1,10 +1,13 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
 
 class AppScaffold extends StatelessWidget {
   final ObstructingPreferredSizeWidget? navigationBar;
   final List<Widget> slivers;
   final ScrollController? controller;
   final Widget? child;
+  final Object? error;
+  final VoidCallback? onRetry;
 
   const AppScaffold({
     super.key,
@@ -12,13 +15,20 @@ class AppScaffold extends StatelessWidget {
     this.slivers = const [],
     this.controller,
     this.child,
+    this.error,
+    this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: navigationBar,
-      child: child ??
+      child: error != null
+          ? AppErrorState(
+              error: error,
+              onRetry: onRetry,
+            )
+          : (child ??
           CustomScrollView(
             controller: controller,
             physics: const BouncingScrollPhysics(
@@ -33,7 +43,7 @@ class AppScaffold extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          )),
     );
   }
 }

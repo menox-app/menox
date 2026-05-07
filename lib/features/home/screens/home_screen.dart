@@ -12,6 +12,7 @@ import 'package:flutter_core/features/home/widgets/post_card.dart';
 import 'package:flutter_core/features/user/providers/user_provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
 import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -228,15 +229,9 @@ class HomeScreen extends HookConsumerWidget {
           ],
           error: (error, stackTrace) => [
             SliverFillRemaining(
-              child: Center(
-                child: Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.textStyle.copyWith(
-                    color: ShadcnColors.mutedForeground,
-                    fontSize: AppFontSizes.bodySmall,
-                  ),
-                ),
+              child: AppErrorState(
+                error: error,
+                onRetry: () => postsNotifier.refresh(),
               ),
             ),
           ],

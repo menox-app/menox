@@ -8,6 +8,7 @@ import 'package:flutter_core/features/home/providers/post_providers.dart';
 import 'package:flutter_core/features/home/widgets/comment_card.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
 
@@ -156,18 +157,10 @@ class PostDetailScreen extends HookConsumerWidget {
           ],
           error: (error, stackTrace) => [
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: Center(
-                  child: Text(
-                    error.toString(),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.textStyle.copyWith(
-                      fontSize: AppFontSizes.bodySmall,
-                      color: ShadcnColors.mutedForeground,
-                    ),
-                  ),
-                ),
+              child: AppErrorState(
+                error: error,
+                onRetry: () => commentsNotifier.refresh(),
+                showHomeButton: false,
               ),
             ),
           ],

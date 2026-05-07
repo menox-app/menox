@@ -11,6 +11,7 @@ import 'package:flutter_core/features/profile/screens/profile_screen.dart';
 import 'package:flutter_core/features/home/screens/main_screen.dart';
 import 'package:flutter_core/features/home/screens/home_screen.dart';
 import 'package:flutter_core/features/auth/providers/auth_provider.dart';
+import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
 
 /// Routes that only unauthenticated users should access.
 const _authRoutes = {'/welcome', '/login', '/register'};
@@ -49,6 +50,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       return null;
     },
+    errorBuilder: (context, state) => AppScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Not Found'),
+        border: null,
+      ),
+      error: state.error ?? 'The page you are looking for does not exist.',
+    ),
     routes: [
       // Auth Routes
       GoRoute(
