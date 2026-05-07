@@ -6,13 +6,22 @@ import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/utils/date_time_utils.dart';
 import 'package:flutter_core/core/utils/number_format_utils.dart';
+import 'package:flutter_core/features/home/widgets/create_comment_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CommentCard extends StatelessWidget {
+  final Post post;
   final Comment comment;
   final bool isLast;
+  final bool showHorizontalPadding;
 
-  const CommentCard({super.key, required this.comment, this.isLast = false});
+  const CommentCard({
+    super.key,
+    required this.post,
+    required this.comment,
+    this.isLast = false,
+    this.showHorizontalPadding = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +29,12 @@ class CommentCard extends StatelessWidget {
     final hasContent =
         comment.content != null && comment.content!.trim().isNotEmpty;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, isLast ? 12 : 8),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (showHorizontalPadding) const SizedBox(width: 16),
           SizedBox(
             width: 38,
             child: Stack(
@@ -45,7 +55,7 @@ class CommentCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: EdgeInsets.only(top: 2, right: showHorizontalPadding ? 16 : 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -89,7 +99,7 @@ class CommentCard extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 6),
-                  _buildCommentActionBar(comment),
+                  _buildCommentActionBar(context, comment),
                 ],
               ),
             ),
@@ -117,7 +127,7 @@ class CommentCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCommentActionBar(Comment comment) {
+  Widget _buildCommentActionBar(BuildContext context, Comment comment) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -132,7 +142,8 @@ class CommentCard extends StatelessWidget {
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: comment.replyCount,
-            onTap: () {},
+            onTap: () =>
+                showCreateCommentSheet(context, post, parentComment: comment),
           ),
         ],
       ),

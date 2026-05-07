@@ -6,8 +6,10 @@ import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_image.dart';
 import 'package:flutter_core/core/utils/date_time_utils.dart';
 import 'package:flutter_core/core/utils/number_format_utils.dart';
-import 'package:flutter_core/features/home/screens/post_detail_screen.dart';
+import 'package:flutter_core/features/home/widgets/comment_card.dart';
+import 'package:flutter_core/features/home/widgets/create_comment_sheet.dart';
 import 'package:flutter_core/features/home/widgets/media_carousel.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Threads-style post card:
@@ -31,13 +33,7 @@ class PostCard extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => PostDetailScreen(post: post),
-          ),
-        );
-      },
+      onTap: () => context.push('/post/${post.id.trim()}', extra: post),
       behavior: HitTestBehavior.opaque,
       child: Container(
         color: ShadcnColors.background,
@@ -96,7 +92,7 @@ class PostCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(66, 0, 16, 0),
-                      child: _buildActionBar(),
+                      child: _buildActionBar(context),
                     ),
 
                     SizedBox(height: hasHighlights ? 6 : 10),
@@ -131,8 +127,26 @@ class PostCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAvatar(author),
+                SizedBox(
+                  width: 38,
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    children: [
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _ThreadLinePainter(
+                            color: ShadcnColors.border,
+                            startFromAvatar: true,
+                            paddingLeft: 0,
+                          ),
+                        ),
+                      ),
+                      _buildAvatar(author),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Row(
@@ -225,7 +239,7 @@ class PostCard extends StatelessWidget {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildDetailActionBar(),
+            child: _buildDetailActionBar(context),
           ),
           const SizedBox(height: 12),
           Container(height: 0.5, color: ShadcnColors.border),
@@ -291,86 +305,13 @@ class PostCard extends StatelessWidget {
   }
 
   Widget _buildHighlightComment(Comment comment, {required bool isLast}) {
-    final author = comment.author;
-    final hasContent =
-        comment.content != null && comment.content!.trim().isNotEmpty;
-
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 8, 16, isLast ? 12 : 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 38,
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _HighlightLinePainter(
-                      color: ShadcnColors.border,
-                      stopAtAvatar: isLast,
-                    ),
-                  ),
-                ),
-                _buildAvatar(author),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          author?.displayName ?? author?.username ?? 'Unknown',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: AppFontSizes.bodySmall,
-                            fontWeight: FontWeight.w600,
-                            color: ShadcnColors.foreground,
-                          ),
-                        ),
-                      ),
-                      if (comment.createdAt != null) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          DateTimeUtils.relativeShort(comment.createdAt),
-                          style: const TextStyle(
-                            fontSize: AppFontSizes.meta,
-                            color: ShadcnColors.mutedForeground,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (hasContent)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                        comment.content!,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: AppFontSizes.bodySmall,
-                          height: 1.4,
-                          color: ShadcnColors.foreground,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  _buildCommentActionBar(comment),
-                ],
-              ),
-            ),
-          ),
-        ],
+      child: CommentCard(
+        post: post,
+        comment: comment,
+        isLast: isLast,
+        showHorizontalPadding: false,
       ),
     );
   }
@@ -454,7 +395,7 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBar() {
+  Widget _buildActionBar(BuildContext context) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -474,7 +415,14 @@ class PostCard extends StatelessWidget {
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: post.commentCount,
-            onTap: () {},
+            onTap: () {
+              if (isDetail) {
+                // If already in detail, focus or show sheet
+                showCreateCommentSheet(context, post);
+              } else {
+                context.push('/post/${post.id.trim()}', extra: post);
+              }
+            },
           ),
           _actionButton(
             icon: FluentIcons.arrow_sync_24_regular,
@@ -493,29 +441,7 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCommentActionBar(Comment comment) {
-    return Transform.translate(
-      offset: const Offset(-8, 0),
-      child: Row(
-        children: [
-          _actionButton(
-            icon: FluentIcons.heart_24_regular,
-            color: ShadcnColors.foreground,
-            count: comment.likeCount,
-            onTap: () {},
-          ),
-          _actionButton(
-            icon: FluentIcons.chat_24_regular,
-            color: ShadcnColors.foreground,
-            count: comment.replyCount,
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailActionBar() {
+  Widget _buildDetailActionBar(BuildContext context) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -536,7 +462,7 @@ class PostCard extends StatelessWidget {
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: post.commentCount,
-            onTap: () {},
+            onTap: () => showCreateCommentSheet(context, post),
             large: true,
           ),
           _actionButton(
@@ -594,12 +520,18 @@ class PostCard extends StatelessWidget {
 
 class _ThreadLinePainter extends CustomPainter {
   final Color color;
+  final bool startFromAvatar;
+  final double paddingLeft;
 
-  _ThreadLinePainter({required this.color});
+  _ThreadLinePainter({
+    required this.color,
+    this.startFromAvatar = false,
+    this.paddingLeft = 16.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    const startY = 14.0 + 38.0 + 8.0; // top padding + avatar height + gap
+    final startY = startFromAvatar ? (38.0 + 8.0) : (14.0 + 38.0 + 8.0);
     if (size.height <= startY) return;
 
     final paint = Paint()
@@ -607,37 +539,15 @@ class _ThreadLinePainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
 
-    const x = 16.0 + (38.0 / 2.0); // left padding + half avatar
-    canvas.drawLine(const Offset(x, startY), Offset(x, size.height), paint);
+    final x = paddingLeft + (38.0 / 2.0);
+    canvas.drawLine(Offset(x, startY), Offset(x, size.height), paint);
   }
 
   @override
   bool shouldRepaint(covariant _ThreadLinePainter oldDelegate) {
-    return oldDelegate.color != color;
-  }
-}
-
-class _HighlightLinePainter extends CustomPainter {
-  final Color color;
-  final bool stopAtAvatar;
-
-  _HighlightLinePainter({required this.color, required this.stopAtAvatar});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
-    final endY = stopAtAvatar ? 19.0 : size.height;
-    canvas.drawLine(const Offset(19, 0), Offset(19, endY), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _HighlightLinePainter oldDelegate) {
     return oldDelegate.color != color ||
-        oldDelegate.stopAtAvatar != stopAtAvatar;
+        oldDelegate.startFromAvatar != startFromAvatar ||
+        oldDelegate.paddingLeft != paddingLeft;
   }
 }
 

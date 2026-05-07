@@ -87,6 +87,44 @@ class Post extends BaseRecord<String> {
   @override
   Map<String, dynamic> toJson() => _$PostToJson(this);
 
+  Post copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Map<String, dynamic>? extraData,
+    String? authorId,
+    String? content,
+    String? visibility,
+    Author? author,
+    List<Media>? medias,
+    num? likeCount,
+    num? commentCount,
+    num? repostCount,
+    num? shareCount,
+    bool? isLiked,
+    bool? isFollowingAuthor,
+    List<Comment>? highlightComments,
+  }) {
+    return Post(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      extraData: extraData ?? this.extraData,
+      authorId: authorId ?? this.authorId,
+      content: content ?? this.content,
+      visibility: visibility ?? this.visibility,
+      author: author ?? this.author,
+      medias: medias ?? this.medias,
+      likeCount: likeCount ?? this.likeCount,
+      commentCount: commentCount ?? this.commentCount,
+      repostCount: repostCount ?? this.repostCount,
+      shareCount: shareCount ?? this.shareCount,
+      isLiked: isLiked ?? this.isLiked,
+      isFollowingAuthor: isFollowingAuthor ?? this.isFollowingAuthor,
+      highlightComments: highlightComments ?? this.highlightComments,
+    );
+  }
+
   Post _withExtraData(Map<String, dynamic> extraData) {
     return Post(
       id: id,

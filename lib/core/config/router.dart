@@ -10,6 +10,8 @@ import 'package:flutter_core/features/activity/screens/activity_screen.dart';
 import 'package:flutter_core/features/profile/screens/profile_screen.dart';
 import 'package:flutter_core/features/home/screens/main_screen.dart';
 import 'package:flutter_core/features/home/screens/home_screen.dart';
+import 'package:flutter_core/features/home/screens/post_detail_screen.dart';
+import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/features/auth/providers/auth_provider.dart';
 import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
 
@@ -76,6 +78,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) =>
             const CupertinoPage(child: RegisterScreen()),
+      ),
+      GoRoute(
+        path: '/post/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final post = state.extra as Post;
+          return CupertinoPage(child: PostDetailScreen(post: post));
+        },
       ),
 
       // Main Shell Route

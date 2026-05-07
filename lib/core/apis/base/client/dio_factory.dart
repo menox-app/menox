@@ -49,6 +49,7 @@ class DioFactory {
     required LocalStorage localStorage,
     HttpClientAdapter? httpClientAdapter,
   }) {
+    if (_initialized) return;
     _instance = DioFactory._(
       apiBaseUrl: apiBaseUrl,
       localStorage: localStorage,

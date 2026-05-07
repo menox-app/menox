@@ -1,6 +1,7 @@
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/apis/base/interfaces/record.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
+import 'package:flutter_core/core/apis/base/interfaces/serializable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'comment.g.dart';
@@ -23,6 +24,7 @@ class Comment extends BaseRecord<String> {
   @JsonKey(fromJson: _numFromJson)
   final num? replyCount;
   final List<Comment>? replies;
+  final List<Media>? medias;
 
   Comment({
     super.id = '',
@@ -42,6 +44,7 @@ class Comment extends BaseRecord<String> {
     this.likeCount,
     this.replyCount,
     this.replies,
+    this.medias,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) =>
@@ -67,4 +70,45 @@ class IGetCommentsRequest extends BasePaginationRequest<Map<String, dynamic>> {
          pathParams: {'id': id},
          extraParams: {if (parentId != null) 'parent_id': parentId},
        );
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
+class CreateCommentBody implements BaseSerializable {
+  final String postId;
+  final String content;
+  final String? parentId;
+  final List<CreateCommentMediaBody>? medias;
+
+  CreateCommentBody({
+    required this.postId,
+    required this.content,
+    this.parentId,
+    this.medias,
+  });
+
+  factory CreateCommentBody.fromJson(Map<String, dynamic> json) =>
+      _$CreateCommentBodyFromJson(json);
+
+  @override
+  Map<String, dynamic> toJson() => _$CreateCommentBodyToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class CreateCommentMediaBody {
+  final String mediaId;
+  final int order;
+
+  CreateCommentMediaBody({required this.mediaId, required this.order});
+
+  factory CreateCommentMediaBody.fromJson(Map<String, dynamic> json) =>
+      _$CreateCommentMediaBodyFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CreateCommentMediaBodyToJson(this);
+}
+
+class ICreateCommentRequest extends BaseCreateRequest<Comment> {
+  ICreateCommentRequest({
+    required super.body,
+    super.params,
+  });
 }

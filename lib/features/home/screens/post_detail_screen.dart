@@ -1,16 +1,18 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/widgets/app_button.dart';
 import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
 import 'package:flutter_core/features/home/providers/post_providers.dart';
+import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
+import 'package:flutter_core/features/home/widgets/comment_input_bar.dart';
 import 'package:flutter_core/features/home/widgets/comment_card.dart';
 import 'package:flutter_core/features/home/widgets/post_card.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
 
 class PostDetailScreen extends HookConsumerWidget {
   final Post post;
@@ -19,6 +21,8 @@ class PostDetailScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final postAsync = ref.watch(postDetailProvider(post.id));
+    final currentPost = postAsync.valueOrNull ?? post;
     final theme = CupertinoTheme.of(context);
     final scrollController = useScrollController();
     final commentsAsync = ref.watch(commentsProvider(post.id));
@@ -48,7 +52,7 @@ class PostDetailScreen extends HookConsumerWidget {
 
     return AppScaffold(
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: ShadcnColors.background,
+        backgroundColor: ShadcnColors.background.withValues(alpha: 0.9),
         border: const Border(
           bottom: BorderSide(color: ShadcnColors.border, width: 0.5),
         ),
@@ -70,7 +74,7 @@ class PostDetailScreen extends HookConsumerWidget {
               ),
             ),
             Text(
-              '598K lượt xem',
+              'Chi tiết bài viết',
               style: theme.textTheme.navTitleTextStyle.copyWith(
                 color: ShadcnColors.mutedForeground,
                 fontSize: AppFontSizes.meta,
@@ -96,76 +100,100 @@ class PostDetailScreen extends HookConsumerWidget {
             ),
           ],
         ),
-      ),     
-      controller: scrollController,
-      slivers: [
-        // Post Detail
-        SliverToBoxAdapter(child: PostCard(post: post, isDetail: true)),
+      ),
+      child: Material(
+        color: ShadcnColors.background,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomScrollView(
+                controller: scrollController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                slivers: [
+                  // Post Detail
+                  SliverToBoxAdapter(child: PostCard(post: currentPost, isDetail: true)),
 
-        // Pull to refresh
-        CupertinoSliverRefreshControl(
-          onRefresh: () async {
-            await commentsNotifier.refresh();
-          },
-        ),
+                  // Pull to refresh
+                  CupertinoSliverRefreshControl(
+                    onRefresh: () async {
+                      await commentsNotifier.refresh();
+                    },
+                  ),
 
-        ...commentsAsync.when(
-          skipLoadingOnRefresh: true,
-          data: (commentsState) {
-            final comments = commentsState.items;
-            return [
-              if (comments.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: Center(
-                      child: Text(
-                        'No comments yet.',
-                        style: theme.textTheme.textStyle.copyWith(
-                          fontSize: AppFontSizes.bodySmall,
-                          color: ShadcnColors.mutedForeground,
+                  ...commentsAsync.when(
+                    skipLoadingOnRefresh: true,
+                    data: (commentsState) {
+                      final comments = commentsState.items;
+                      return [
+                        if (comments.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 40),
+                              child: Center(
+                                child: Text(
+                                  'No comments yet.',
+                                  style: theme.textTheme.textStyle.copyWith(
+                                    fontSize: AppFontSizes.bodySmall,
+                                    color: ShadcnColors.mutedForeground,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((context, index) {
+                                return CommentCard(
+                                  post: currentPost,
+                                  comment: comments[index],
+                                  isLast: index == comments.length - 1,
+                                );
+                            }, childCount: comments.length),
+                          ),
+                        if (commentsState.isFetchingNextPage)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => const CommentCardSkeleton(),
+                              childCount: 2,
+                            ),
+                          ),
+                      ];
+                    },
+                    loading: () => [
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => const CommentCardSkeleton(),
+                          childCount: 5,
                         ),
                       ),
-                    ),
+                    ],
+                    error: (error, stackTrace) => [
+                      SliverToBoxAdapter(
+                        child: AppErrorState(
+                          error: error,
+                          onRetry: () => commentsNotifier.refresh(),
+                          showHomeButton: false,
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    return CommentCard(
-                      comment: comments[index],
-                      isLast: index == comments.length - 1,
-                    );
-                  }, childCount: comments.length),
-                ),
-              if (commentsState.isFetchingNextPage)
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => const CommentCardSkeleton(),
-                    childCount: 2,
-                  ),
-                ),
-            ];
-          },
-          loading: () => [
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => const CommentCardSkeleton(),
-                childCount: 5,
+                  
+                  // Bottom padding for input bar
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                ],
               ),
             ),
-          ],
-          error: (error, stackTrace) => [
-            SliverToBoxAdapter(
-              child: AppErrorState(
-                error: error,
-                onRetry: () => commentsNotifier.refresh(),
-                showHomeButton: false,
-              ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: CommentInputBar(post: currentPost),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

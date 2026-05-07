@@ -31,6 +31,9 @@ Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
   replies: (json['replies'] as List<dynamic>?)
       ?.map((e) => Comment.fromJson(e as Map<String, dynamic>))
       .toList(),
+  medias: (json['medias'] as List<dynamic>?)
+      ?.map((e) => Media.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$CommentToJson(Comment instance) => <String, dynamic>{
@@ -50,4 +53,36 @@ Map<String, dynamic> _$CommentToJson(Comment instance) => <String, dynamic>{
   'like_count': instance.likeCount,
   'reply_count': instance.replyCount,
   'replies': instance.replies?.map((e) => e.toJson()).toList(),
+  'medias': instance.medias?.map((e) => e.toJson()).toList(),
 };
+
+CreateCommentBody _$CreateCommentBodyFromJson(Map<String, dynamic> json) =>
+    CreateCommentBody(
+      postId: json['post_id'] as String,
+      content: json['content'] as String,
+      parentId: json['parent_id'] as String?,
+      medias: (json['medias'] as List<dynamic>?)
+          ?.map(
+            (e) => CreateCommentMediaBody.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
+    );
+
+Map<String, dynamic> _$CreateCommentBodyToJson(CreateCommentBody instance) =>
+    <String, dynamic>{
+      'post_id': instance.postId,
+      'content': instance.content,
+      'parent_id': instance.parentId,
+      'medias': instance.medias?.map((e) => e.toJson()).toList(),
+    };
+
+CreateCommentMediaBody _$CreateCommentMediaBodyFromJson(
+  Map<String, dynamic> json,
+) => CreateCommentMediaBody(
+  mediaId: json['media_id'] as String,
+  order: (json['order'] as num).toInt(),
+);
+
+Map<String, dynamic> _$CreateCommentMediaBodyToJson(
+  CreateCommentMediaBody instance,
+) => <String, dynamic>{'media_id': instance.mediaId, 'order': instance.order};

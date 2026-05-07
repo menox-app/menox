@@ -9,8 +9,8 @@ abstract class BaseRequest<B> {
 
 /// Tương đương: BaseCreateRequest<T>
 /// (Bên Dart, bạn truyền trực tiếp DTO không có ID vào T)
-class BaseCreateRequest<T> extends BaseRequest<T> {
-  BaseCreateRequest({required T super.body, super.params});
+class BaseCreateRequest<T> extends BaseRequest<dynamic> {
+  BaseCreateRequest({required super.body, super.params});
 }
 
 /// Tương đương: BasePaginationRequest<Params>
@@ -56,9 +56,9 @@ class BaseGetBySlugRequest extends BaseRequest<void> {
 }
 
 /// Tương đương: BaseUpdateRequest<T>
-class BaseUpdateRequest<T> extends BaseRequest<T> {
+class BaseUpdateRequest<T> extends BaseRequest<dynamic> {
   BaseUpdateRequest({
     required String id,
-    required T body, // T đóng vai trò là Partial DTO
-  }) : super(body: body, pathParams: {'id': id});
+    required super.body, // dynamic body for Partial DTO
+  }) : super(pathParams: {'id': id});
 }
