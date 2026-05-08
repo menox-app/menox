@@ -5,10 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_core/core/apis/app/providers.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
-import 'package:flutter_core/core/apis/app/interfaces/upload.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/core/ui/controls/app_button.dart';
 import 'package:flutter_core/core/ui/controls/app_icon_button.dart';
@@ -154,16 +152,20 @@ class _CreateCommentSheetState extends ConsumerState<CreateCommentSheet> {
 
     setState(() => _isPosting = true);
     try {
-      final medias = await _uploadAttachments();
       await ref
           .read(commentActionProvider.notifier)
-          .createComment(
-            CreateCommentBody(
-              postId: widget.post.id,
-              content: _contentController.text.trim(),
-              parentId: widget.parentComment?.id,
-              medias: medias,
-            ),
+          .createCommentWithMediaDrafts(
+            postId: widget.post.id,
+            content: _contentController.text.trim(),
+            parentId: widget.parentComment?.id,
+            mediaDrafts: _attachments
+                .map(
+                  (attachment) => CommentMediaDraft(
+                    file: File(attachment.file.path),
+                    type: attachment.type.name,
+                  ),
+                )
+                .toList(),
           );
 
       if (!mounted) return;
@@ -174,36 +176,6 @@ class _CreateCommentSheetState extends ConsumerState<CreateCommentSheet> {
     } finally {
       if (mounted) setState(() => _isPosting = false);
     }
-  }
-
-  Future<List<CreateCommentMediaBody>> _uploadAttachments() async {
-    if (_attachments.isEmpty) return const [];
-
-    final files = _attachments.map((attachment) {
-      return File(attachment.file.path);
-    }).toList();
-
-    final appApi = ref.read(appApiProvider);
-    final response = files.length == 1
-        ? await appApi.upload.single(
-            IUploadSingleRequest(file: files.first, folder: 'comments'),
-          )
-        : await appApi.upload.multiple(
-            IUploadMultipleRequest(files: files, folder: 'comments'),
-          );
-
-    final uploads = response.data is List
-        ? response.data as List
-        : [response.data];
-
-    return uploads.indexed.map((entry) {
-      final (index, upload) = entry;
-      final mediaId = upload.mediaId;
-      if (mediaId == null || mediaId.isEmpty) {
-        throw StateError('Upload response missing mediaId at index $index');
-      }
-      return CreateCommentMediaBody(mediaId: mediaId, order: index);
-    }).toList();
   }
 
   Future<void> _showSubmitError(Object error) {

@@ -225,19 +225,19 @@ class DioFactory {
   InterceptorsWrapper _debugLogInterceptor() {
     return InterceptorsWrapper(
       onRequest: (options, handler) {
-        debugPrint('[DIO] --> ${options.method} ${options.uri}');
+        debugPrint('[DIO] ➡️   ${options.method} ${options.uri}');
         handler.next(options);
       },
       onResponse: (response, handler) {
         debugPrint(
-          '[DIO] <-- ${response.statusCode} '
+          '[DIO] ✅   ${response.statusCode} '
           '${response.requestOptions.method} ${response.requestOptions.uri}',
         );
         handler.next(response);
       },
       onError: (error, handler) {
         debugPrint(
-          '[DIO] !! ${error.response?.statusCode ?? error.type} '
+          '[DIO] ⛔   ${error.response?.statusCode ?? error.type} '
           '${error.requestOptions.method} ${error.requestOptions.uri} '
           '${error.message}',
         );

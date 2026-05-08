@@ -31,98 +31,104 @@ class CommentCard extends StatelessWidget {
     final hasContent =
         comment.content != null && comment.content!.trim().isNotEmpty;
     final hasMedia = comment.medias != null && comment.medias!.isNotEmpty;
+    final isOptimistic = comment.extraData['optimistic'] == true;
 
     return Container(
       padding: EdgeInsets.only(top: showHorizontalPadding ? 8 : 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (showHorizontalPadding) const SizedBox(width: _horizontalInset),
-          SizedBox(
-            width: 38,
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _HighlightLinePainter(
-                      color: ShadcnColors.border,
-                      stopAtAvatar: isLast,
+      child: _PendingPulse(
+        isPending: isOptimistic,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (showHorizontalPadding) const SizedBox(width: _horizontalInset),
+            SizedBox(
+              width: 38,
+              child: Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _HighlightLinePainter(
+                        color: ShadcnColors.border,
+                        stopAtAvatar: isLast,
+                      ),
                     ),
                   ),
-                ),
-                _buildAvatar(author),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: 2,
-                right: showHorizontalPadding ? _horizontalInset : 0,
+                  _buildAvatar(author),
+                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 2,
+                  right: showHorizontalPadding ? _horizontalInset : 0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            author?.displayName ??
+                                author?.username ??
+                                'Unknown',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: AppFontSizes.bodySmall,
+                              fontWeight: FontWeight.w600,
+                              color: ShadcnColors.foreground,
+                            ),
+                          ),
+                        ),
+                        if (comment.createdAt != null) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            DateTimeUtils.relativeShort(comment.createdAt),
+                            style: const TextStyle(
+                              fontSize: AppFontSizes.meta,
+                              color: ShadcnColors.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (hasContent)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
                         child: Text(
-                          author?.displayName ?? author?.username ?? 'Unknown',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          comment.content!,
+                          maxLines: null,
                           style: const TextStyle(
                             fontSize: AppFontSizes.bodySmall,
-                            fontWeight: FontWeight.w600,
+                            height: 1.4,
                             color: ShadcnColors.foreground,
                           ),
                         ),
                       ),
-                      if (comment.createdAt != null) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          DateTimeUtils.relativeShort(comment.createdAt),
-                          style: const TextStyle(
-                            fontSize: AppFontSizes.meta,
-                            color: ShadcnColors.mutedForeground,
+                    if (hasMedia)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: comment.medias!
+                                .map((media) => _buildMediaPreview(media.url))
+                                .toList(),
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                  if (hasContent)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                        comment.content!,
-                        maxLines: null,
-                        style: const TextStyle(
-                          fontSize: AppFontSizes.bodySmall,
-                          height: 1.4,
-                          color: ShadcnColors.foreground,
-                        ),
                       ),
-                    ),
-                  if (hasMedia)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: comment.medias!
-                              .map((media) => _buildMediaPreview(media.url))
-                              .toList(),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  _buildCommentActionBar(context, comment),
-                ],
+                    const SizedBox(height: 6),
+                    _buildCommentActionBar(context, comment, isOptimistic),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -164,7 +170,11 @@ class CommentCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCommentActionBar(BuildContext context, Comment comment) {
+  Widget _buildCommentActionBar(
+    BuildContext context,
+    Comment comment,
+    bool isOptimistic,
+  ) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -173,14 +183,19 @@ class CommentCard extends StatelessWidget {
             icon: FluentIcons.heart_24_regular,
             color: ShadcnColors.foreground,
             count: comment.likeCount,
-            onTap: () {},
+            onTap: isOptimistic ? null : () {},
           ),
           _actionButton(
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: comment.replyCount,
-            onTap: () =>
-                showCreateCommentSheet(context, post, parentComment: comment),
+            onTap: isOptimistic
+                ? null
+                : () => showCreateCommentSheet(
+                    context,
+                    post,
+                    parentComment: comment,
+                  ),
           ),
         ],
       ),
@@ -191,7 +206,7 @@ class CommentCard extends StatelessWidget {
     required IconData icon,
     required Color color,
     num? count,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -219,6 +234,68 @@ class CommentCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PendingPulse extends StatefulWidget {
+  final bool isPending;
+  final Widget child;
+
+  const _PendingPulse({required this.isPending, required this.child});
+
+  @override
+  State<_PendingPulse> createState() => _PendingPulseState();
+}
+
+class _PendingPulseState extends State<_PendingPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _opacity = Tween<double>(
+      begin: 0.55,
+      end: 0.72,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    if (widget.isPending) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PendingPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPending == oldWidget.isPending) return;
+    if (widget.isPending) {
+      _controller.repeat(reverse: true);
+    } else {
+      _controller
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isPending) return widget.child;
+
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (context, child) {
+        return Opacity(opacity: _opacity.value, child: child);
+      },
+      child: widget.child,
     );
   }
 }

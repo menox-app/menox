@@ -15,6 +15,13 @@ part 'comment_providers.g.dart';
 
 const _pageLimit = 10;
 
+class CommentMediaDraft {
+  final File file;
+  final String type;
+
+  const CommentMediaDraft({required this.file, required this.type});
+}
+
 @riverpod
 class Comments extends _$Comments {
   @override
@@ -99,15 +106,36 @@ class CommentAction extends _$CommentAction with AsyncAction<void> {
     String? parentId,
     File? file,
   }) => execute(() async {
-    final optimisticMedia = file == null
-        ? null
-        : Media(
-            id: 'optimistic-media-${DateTime.now().microsecondsSinceEpoch}',
-            url: file.path,
-            type: 'image',
-            postId: postId,
-          );
+    await _createCommentWithMediaDrafts(
+      postId: postId,
+      content: content,
+      parentId: parentId,
+      mediaDrafts: file == null
+          ? const []
+          : [CommentMediaDraft(file: file, type: 'image')],
+    );
+  });
 
+  Future<void> createCommentWithMediaDrafts({
+    required String postId,
+    required String content,
+    String? parentId,
+    required List<CommentMediaDraft> mediaDrafts,
+  }) => execute(() async {
+    await _createCommentWithMediaDrafts(
+      postId: postId,
+      content: content,
+      parentId: parentId,
+      mediaDrafts: mediaDrafts,
+    );
+  });
+
+  Future<void> _createCommentWithMediaDrafts({
+    required String postId,
+    required String content,
+    String? parentId,
+    required List<CommentMediaDraft> mediaDrafts,
+  }) async {
     final body = CreateCommentBody(
       postId: postId,
       content: content,
@@ -116,29 +144,64 @@ class CommentAction extends _$CommentAction with AsyncAction<void> {
 
     await _createCommentOptimistically(
       body,
-      optimisticMedias: optimisticMedia == null ? const [] : [optimisticMedia],
+      optimisticMedias: _optimisticMedias(postId, mediaDrafts),
       beforeCreate: () async {
-        if (file == null) return body;
+        if (mediaDrafts.isEmpty) return body;
 
-        final response = await ref
-            .read(appApiProvider)
-            .upload
-            .single(IUploadSingleRequest(file: file, folder: 'comments'));
-        final upload = response.data;
-        final mediaId = upload.mediaId;
-        if (mediaId == null || mediaId.isEmpty) {
-          throw StateError('Upload response missing mediaId');
-        }
+        final medias = await _uploadCommentMedias(mediaDrafts);
 
         return CreateCommentBody(
           postId: postId,
           content: content,
           parentId: parentId,
-          medias: [CreateCommentMediaBody(mediaId: mediaId, order: 0)],
+          medias: medias,
         );
       },
     );
-  });
+  }
+
+  List<Media> _optimisticMedias(
+    String postId,
+    List<CommentMediaDraft> mediaDrafts,
+  ) {
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    return mediaDrafts.indexed.map((entry) {
+      final (index, draft) = entry;
+      return Media(
+        id: 'optimistic-media-$index-$timestamp',
+        url: draft.file.path,
+        type: draft.type,
+        postId: postId,
+      );
+    }).toList();
+  }
+
+  Future<List<CreateCommentMediaBody>> _uploadCommentMedias(
+    List<CommentMediaDraft> mediaDrafts,
+  ) async {
+    final files = mediaDrafts.map((draft) => draft.file).toList();
+    final uploadApi = ref.read(appApiProvider).upload;
+    final response = files.length == 1
+        ? await uploadApi.single(
+            IUploadSingleRequest(file: files.first, folder: 'comments'),
+          )
+        : await uploadApi.multiple(
+            IUploadMultipleRequest(files: files, folder: 'comments'),
+          );
+
+    final uploads = response.data is List
+        ? response.data as List
+        : [response.data];
+
+    return uploads.indexed.map((entry) {
+      final (index, upload) = entry;
+      final mediaId = upload.mediaId;
+      if (mediaId == null || mediaId.isEmpty) {
+        throw StateError('Upload response missing mediaId at index $index');
+      }
+      return CreateCommentMediaBody(mediaId: mediaId, order: index);
+    }).toList();
+  }
 
   Future<void> _createCommentOptimistically(
     CreateCommentBody body, {

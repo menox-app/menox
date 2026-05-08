@@ -33,88 +33,95 @@ class PostCard extends StatelessWidget {
     final hasMedia = medias.isNotEmpty;
     final hasContent = post.content != null && post.content!.trim().isNotEmpty;
     final hasHighlights = highlightComments.isNotEmpty;
+    final isOptimistic = post.extraData['optimistic'] == true;
 
     if (isDetail) {
       return _buildDetailView(context, author, medias, hasContent, hasMedia);
     }
 
     return GestureDetector(
-      onTap: () => context.push('/post/${post.id.trim()}', extra: post),
+      onTap: isOptimistic
+          ? null
+          : () => context.push('/post/${post.id.trim()}', extra: post),
       behavior: HitTestBehavior.opaque,
       child: Container(
         color: ShadcnColors.background,
         child: Column(
           children: [
-            Stack(
-              children: [
-                if (hasHighlights)
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _ThreadLinePainter(color: ShadcnColors.border),
-                    ),
-                  ),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        _horizontalInset,
-                        14,
-                        _horizontalInset,
-                        0,
+            _PendingPulse(
+              isPending: isOptimistic,
+              child: Stack(
+                children: [
+                  if (hasHighlights)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _ThreadLinePainter(color: ShadcnColors.border),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAvatar(author),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildHeader(author),
-                                if (hasContent) ...[
-                                  const SizedBox(height: 4),
-                                  _buildContent(),
+                    ),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          _horizontalInset,
+                          14,
+                          _horizontalInset,
+                          0,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAvatar(author),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildHeader(author, isOptimistic),
+                                  if (hasContent) ...[
+                                    const SizedBox(height: 4),
+                                    _buildContent(),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    if (hasMedia) ...[
-                      const SizedBox(height: 10),
-                      MediaCarousel(
-                        medias: medias,
-                        likeCount: post.likeCount,
-                        commentCount: post.commentCount,
-                        repostCount: post.repostCount,
-                        shareCount: post.shareCount,
-                        padding: const EdgeInsets.only(
-                          left: _contentInset,
-                          right: _horizontalInset,
+                          ],
                         ),
                       ),
-                    ],
 
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        _contentInset,
-                        0,
-                        _horizontalInset,
-                        0,
+                      if (hasMedia) ...[
+                        const SizedBox(height: 10),
+                        MediaCarousel(
+                          medias: medias,
+                          likeCount: post.likeCount,
+                          commentCount: post.commentCount,
+                          repostCount: post.repostCount,
+                          shareCount: post.shareCount,
+                          isPending: isOptimistic,
+                          padding: const EdgeInsets.only(
+                            left: _contentInset,
+                            right: _horizontalInset,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          _contentInset,
+                          0,
+                          _horizontalInset,
+                          0,
+                        ),
+                        child: _buildActionBar(context, isOptimistic),
                       ),
-                      child: _buildActionBar(context),
-                    ),
 
-                    SizedBox(height: hasHighlights ? 6 : 10),
-                  ],
-                ),
-              ],
+                      SizedBox(height: hasHighlights ? 6 : 10),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
             if (hasHighlights && !isDetail)
@@ -249,6 +256,7 @@ class PostCard extends StatelessWidget {
               commentCount: post.commentCount,
               repostCount: post.repostCount,
               shareCount: post.shareCount,
+              isPending: post.extraData['optimistic'] == true,
               padding: const EdgeInsets.symmetric(horizontal: _horizontalInset),
             ),
           ],
@@ -358,7 +366,7 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Author? author) {
+  Widget _buildHeader(Author? author, bool isOptimistic) {
     return Row(
       children: [
         // Username
@@ -391,7 +399,7 @@ class PostCard extends StatelessWidget {
         ),
         // More button
         GestureDetector(
-          onTap: () {},
+          onTap: isOptimistic ? null : () {},
           child: const Padding(
             padding: EdgeInsets.only(left: 8),
             child: Icon(
@@ -419,7 +427,7 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBar(BuildContext context) {
+  Widget _buildActionBar(BuildContext context, bool isOptimistic) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -433,32 +441,34 @@ class PostCard extends StatelessWidget {
                 ? CupertinoColors.systemRed
                 : ShadcnColors.foreground,
             count: post.likeCount,
-            onTap: () {},
+            onTap: isOptimistic ? null : () {},
           ),
           _actionButton(
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: post.commentCount,
-            onTap: () {
-              if (isDetail) {
-                // If already in detail, focus or show sheet
-                showCreateCommentSheet(context, post);
-              } else {
-                context.push('/post/${post.id.trim()}', extra: post);
-              }
-            },
+            onTap: isOptimistic
+                ? null
+                : () {
+                    if (isDetail) {
+                      // If already in detail, focus or show sheet
+                      showCreateCommentSheet(context, post);
+                    } else {
+                      context.push('/post/${post.id.trim()}', extra: post);
+                    }
+                  },
           ),
           _actionButton(
             icon: FluentIcons.arrow_sync_24_regular,
             color: ShadcnColors.foreground,
             count: post.repostCount,
-            onTap: () {},
+            onTap: isOptimistic ? null : () {},
           ),
           _actionButton(
             icon: FluentIcons.send_24_regular,
             color: ShadcnColors.foreground,
             count: post.shareCount,
-            onTap: () {},
+            onTap: isOptimistic ? null : () {},
           ),
         ],
       ),
@@ -512,7 +522,7 @@ class PostCard extends StatelessWidget {
     required IconData icon,
     required Color color,
     num? count,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     bool large = false,
   }) {
     return GestureDetector(
@@ -541,6 +551,68 @@ class PostCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PendingPulse extends StatefulWidget {
+  final bool isPending;
+  final Widget child;
+
+  const _PendingPulse({required this.isPending, required this.child});
+
+  @override
+  State<_PendingPulse> createState() => _PendingPulseState();
+}
+
+class _PendingPulseState extends State<_PendingPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _opacity = Tween<double>(
+      begin: 0.55,
+      end: 0.72,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    if (widget.isPending) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PendingPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPending == oldWidget.isPending) return;
+    if (widget.isPending) {
+      _controller.repeat(reverse: true);
+    } else {
+      _controller
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isPending) return widget.child;
+
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (context, child) {
+        return Opacity(opacity: _opacity.value, child: child);
+      },
+      child: widget.child,
     );
   }
 }

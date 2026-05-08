@@ -17,6 +17,7 @@ class MediaCarousel extends StatefulWidget {
   final num? repostCount;
   final num? shareCount;
   final EdgeInsetsGeometry padding;
+  final bool isPending;
 
   const MediaCarousel({
     super.key,
@@ -26,6 +27,7 @@ class MediaCarousel extends StatefulWidget {
     this.repostCount,
     this.shareCount,
     this.padding = EdgeInsets.zero,
+    this.isPending = false,
   });
 
   @override
@@ -43,7 +45,7 @@ class _MediaCarouselState extends State<MediaCarousel> {
   void initState() {
     super.initState();
     final firstMedia = widget.medias.first;
-    if (firstMedia.type == 'video') {
+    if (!widget.isPending && firstMedia.type == 'video') {
       _initVideo(firstMedia.url);
     }
   }
@@ -88,15 +90,17 @@ class _MediaCarouselState extends State<MediaCarousel> {
     return Padding(
       padding: widget.padding,
       child: GestureDetector(
-        onTap: () => MediaViewer.open(
-          context,
-          allMedias,
-          initialIndex: 0,
-          likeCount: widget.likeCount,
-          commentCount: widget.commentCount,
-          repostCount: widget.repostCount,
-          shareCount: widget.shareCount,
-        ),
+        onTap: widget.isPending
+            ? null
+            : () => MediaViewer.open(
+                context,
+                allMedias,
+                initialIndex: 0,
+                likeCount: widget.likeCount,
+                commentCount: widget.commentCount,
+                repostCount: widget.repostCount,
+                shareCount: widget.shareCount,
+              ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
@@ -134,15 +138,17 @@ class _MediaCarouselState extends State<MediaCarousel> {
           separatorBuilder: (_, __) => const SizedBox(width: 6),
           itemBuilder: (_, i) {
             return GestureDetector(
-              onTap: () => MediaViewer.open(
-                context,
-                allMedias,
-                initialIndex: i,
-                likeCount: widget.likeCount,
-                commentCount: widget.commentCount,
-                repostCount: widget.repostCount,
-                shareCount: widget.shareCount,
-              ),
+              onTap: widget.isPending
+                  ? null
+                  : () => MediaViewer.open(
+                      context,
+                      allMedias,
+                      initialIndex: i,
+                      likeCount: widget.likeCount,
+                      commentCount: widget.commentCount,
+                      repostCount: widget.repostCount,
+                      shareCount: widget.shareCount,
+                    ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
@@ -225,15 +231,17 @@ class _MediaCarouselState extends State<MediaCarousel> {
             behavior: HitTestBehavior.opaque,
             onTap: () {
               // Open MediaViewer instead of toggling play inline
-              MediaViewer.open(
-                context,
-                widget.medias,
-                initialIndex: 0,
-                likeCount: widget.likeCount,
-                commentCount: widget.commentCount,
-                repostCount: widget.repostCount,
-                shareCount: widget.shareCount,
-              );
+              if (!widget.isPending) {
+                MediaViewer.open(
+                  context,
+                  widget.medias,
+                  initialIndex: 0,
+                  likeCount: widget.likeCount,
+                  commentCount: widget.commentCount,
+                  repostCount: widget.repostCount,
+                  shareCount: widget.shareCount,
+                );
+              }
             },
             child: SizedBox(
               width: double.infinity,
