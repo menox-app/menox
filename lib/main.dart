@@ -42,17 +42,62 @@ Future<void> bootstrap(FlavorConfig flavorConfig) async {
   );
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   final String appName;
   const MyApp({super.key, required this.appName});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  bool _isShowingSessionExpiredDialog = false;
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(authProvider);
     final router = ref.watch(routerProvider);
 
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (!next.isSessionExpired || _isShowingSessionExpiredDialog) return;
+
+      _isShowingSessionExpiredDialog = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+
+        final navigatorContext = rootNavigatorKey.currentContext;
+        if (navigatorContext == null) {
+          _isShowingSessionExpiredDialog = false;
+          return;
+        }
+
+        await showCupertinoDialog<void>(
+          context: navigatorContext,
+          builder: (dialogContext) => CupertinoAlertDialog(
+            title: const Text('Phiên đăng nhập đã hết hạn'),
+            content: const Text('Vui lòng đăng nhập lại để tiếp tục.'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  ref.read(authProvider.notifier).acknowledgeSessionExpired();
+                  router.go('/login');
+                },
+                child: const Text('Đăng nhập lại'),
+              ),
+            ],
+          ),
+        );
+
+        if (mounted) {
+          _isShowingSessionExpiredDialog = false;
+        }
+      });
+    });
+
     return CupertinoApp.router(
-      title: appName,
+      title: widget.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.cupertinoTheme,
       routerConfig: router,

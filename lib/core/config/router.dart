@@ -11,15 +11,15 @@ import 'package:flutter_core/features/activity/screens/activity_screen.dart';
 import 'package:flutter_core/features/profile/screens/profile_screen.dart';
 import 'package:flutter_core/features/home/screens/main_screen.dart';
 import 'package:flutter_core/features/home/screens/home_screen.dart';
-import 'package:flutter_core/features/home/screens/post_detail_screen.dart';
+import 'package:flutter_core/features/post/screens/post_detail_screen.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/features/auth/providers/auth_provider.dart';
-import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
+import 'package:flutter_core/core/ui/layout/app_scaffold.dart';
 
 /// Routes that only unauthenticated users should access.
 const _authRoutes = {'/welcome', '/login', '/register'};
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final _messagesNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'messages');
 final _activityNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'activity');
@@ -37,12 +37,13 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refreshNotifier.dispose);
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     refreshListenable: refreshNotifier,
     redirect: (context, routerState) {
       final authState = ref.read(authProvider);
       if (authState.isUnknown) return null;
+      if (authState.isSessionExpired) return null;
 
       final isAuthenticated = authState.isAuthenticated;
       final location = routerState.matchedLocation;
@@ -65,25 +66,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Auth Routes
       GoRoute(
         path: '/welcome',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) =>
             const CupertinoPage(child: WelcomeScreen()),
       ),
       GoRoute(
         path: '/login',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) =>
             const CupertinoPage(child: LoginScreen()),
       ),
       GoRoute(
         path: '/register',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) =>
             const CupertinoPage(child: RegisterScreen()),
       ),
       GoRoute(
         path: '/post/:id',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final post = state.extra as Post;
           return CupertinoPage(child: PostDetailScreen(post: post));
@@ -92,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Main Shell Route
       StatefulShellRoute.indexedStack(
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state, navigationShell) {
           return MainScreen(navigationShell: navigationShell);
         },

@@ -13,7 +13,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
 
-enum AuthStatus { unknown, authenticated, unauthenticated }
+enum AuthStatus { unknown, authenticated, unauthenticated, sessionExpired }
 
 class AuthState {
   final AuthStatus status;
@@ -22,6 +22,7 @@ class AuthState {
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
   bool get isUnknown => status == AuthStatus.unknown;
+  bool get isSessionExpired => status == AuthStatus.sessionExpired;
 
   @override
   bool operator ==(Object other) =>
@@ -42,7 +43,9 @@ class Auth extends _$Auth {
 
     final token = _storage.getToken();
     final authState = AuthState(
-      status: token != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+      status: token != null
+          ? AuthStatus.authenticated
+          : AuthStatus.unauthenticated,
     );
 
     if (authState.isAuthenticated) {
@@ -55,7 +58,7 @@ class Auth extends _$Auth {
 
   void _handleAuthFailure() {
     unawaited(_storage.clearAll());
-    state = const AuthState(status: AuthStatus.unauthenticated);
+    state = const AuthState(status: AuthStatus.sessionExpired);
     ref.read(currentUserProvider.notifier).clear();
   }
 
@@ -112,6 +115,12 @@ class Auth extends _$Auth {
     await _storage.clearAll();
     state = const AuthState(status: AuthStatus.unauthenticated);
     ref.read(currentUserProvider.notifier).clear();
+  }
+
+  void acknowledgeSessionExpired() {
+    if (state.isSessionExpired) {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    }
   }
 }
 

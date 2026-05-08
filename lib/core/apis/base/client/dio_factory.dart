@@ -7,6 +7,8 @@ import 'package:flutter_core/core/storage/local_storage.dart';
 
 class DioFactory {
   static const String _retryKey = '_retry';
+  static const String retryDataBuilderKey = 'retry_data_builder';
+  static const String skipAuthRefreshKey = 'skip_auth_refresh';
 
   static late DioFactory _instance;
   static DioFactory get instance => _instance;
@@ -99,29 +101,47 @@ class DioFactory {
         }
 
         final requestOptions = error.requestOptions;
+        if (requestOptions.extra[skipAuthRefreshKey] == true) {
+          return handler.next(error);
+        }
+
         if (requestOptions.extra[_retryKey] == true) {
           return handler.next(error);
         }
 
-        try {
-          final currentToken = _localStorage.getToken();
-          final requestToken = requestOptions.headers['Authorization'];
-          if (currentToken != null && requestToken != 'Bearer $currentToken') {
+        final currentToken = _localStorage.getToken();
+        final requestToken = requestOptions.headers['Authorization'];
+        if (currentToken != null && requestToken != 'Bearer $currentToken') {
+          try {
             final retry = await _retryRequest(
               dio,
               requestOptions,
               currentToken,
             );
             return handler.resolve(retry);
+          } on DioException catch (retryError) {
+            return handler.next(retryError);
           }
+        }
 
-          final newToken = await _refreshAccessToken();
-          final retry = await _retryRequest(dio, requestOptions, newToken);
-          return handler.resolve(retry);
+        late final String newToken;
+        try {
+          newToken = await _refreshAccessToken();
         } catch (_) {
           await _localStorage.clearAll();
           onAuthFailure?.call();
           return handler.reject(error);
+        }
+
+        try {
+          final retry = await _retryRequest(dio, requestOptions, newToken);
+          return handler.resolve(retry);
+        } on DioException catch (retryError) {
+          if (retryError.response?.statusCode == 401) {
+            await _localStorage.clearAll();
+            onAuthFailure?.call();
+          }
+          return handler.next(retryError);
         }
       },
     );
@@ -170,14 +190,14 @@ class DioFactory {
     Dio dio,
     RequestOptions requestOptions,
     String accessToken,
-  ) {
+  ) async {
     final headers = Map<String, dynamic>.from(requestOptions.headers)
       ..['Authorization'] = 'Bearer $accessToken';
     final extra = Map<String, dynamic>.from(requestOptions.extra)
       ..[_retryKey] = true;
 
     final retryOptions = requestOptions.copyWith(
-      data: _cloneDataForRetry(requestOptions.data),
+      data: await _dataForRetry(requestOptions),
       headers: headers,
       extra: extra,
     );
@@ -191,7 +211,13 @@ class DioFactory {
     return retryDio.fetch<dynamic>(retryOptions);
   }
 
-  dynamic _cloneDataForRetry(dynamic data) {
+  FutureOr<dynamic> _dataForRetry(RequestOptions requestOptions) {
+    final retryDataBuilder = requestOptions.extra[retryDataBuilderKey];
+    if (retryDataBuilder is FutureOr<dynamic> Function()) {
+      return retryDataBuilder();
+    }
+
+    final data = requestOptions.data;
     if (data is FormData) return data.clone();
     return data;
   }
