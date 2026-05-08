@@ -8,12 +8,14 @@ import 'package:flutter_core/core/utils/date_time_utils.dart';
 import 'package:flutter_core/core/utils/number_format_utils.dart';
 import 'package:flutter_core/features/comment/widgets/comment_card.dart';
 import 'package:flutter_core/features/comment/widgets/create_comment_sheet.dart';
+import 'package:flutter_core/features/post/providers/post_providers.dart';
 import 'package:flutter_core/features/post/widgets/media_carousel.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 
 /// Threads-style post card:
-class PostCard extends StatelessWidget {
+class PostCard extends ConsumerWidget {
   static const double _horizontalInset = AppSpacing.screenEdge;
   static const double _avatarSize = 38;
   static const double _avatarGap = 12;
@@ -26,7 +28,7 @@ class PostCard extends StatelessWidget {
   const PostCard({super.key, required this.post, this.isDetail = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final author = post.author;
     final medias = post.medias ?? [];
     final highlightComments = (post.highlightComments ?? []).take(1).toList();
@@ -36,7 +38,14 @@ class PostCard extends StatelessWidget {
     final isOptimistic = post.extraData['optimistic'] == true;
 
     if (isDetail) {
-      return _buildDetailView(context, author, medias, hasContent, hasMedia);
+      return _buildDetailView(
+        context,
+        ref,
+        author,
+        medias,
+        hasContent,
+        hasMedia,
+      );
     }
 
     return GestureDetector(
@@ -114,7 +123,7 @@ class PostCard extends StatelessWidget {
                           _horizontalInset,
                           0,
                         ),
-                        child: _buildActionBar(context, isOptimistic),
+                        child: _buildActionBar(context, ref, isOptimistic),
                       ),
 
                       SizedBox(height: hasHighlights ? 6 : 10),
@@ -136,6 +145,7 @@ class PostCard extends StatelessWidget {
 
   Widget _buildDetailView(
     BuildContext context,
+    WidgetRef ref,
     Author? author,
     List<Media> medias,
     bool hasContent,
@@ -263,7 +273,7 @@ class PostCard extends StatelessWidget {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: _horizontalInset),
-            child: _buildDetailActionBar(context),
+            child: _buildDetailActionBar(context, ref),
           ),
           const SizedBox(height: 12),
           Container(height: 0.5, color: ShadcnColors.border),
@@ -427,7 +437,11 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBar(BuildContext context, bool isOptimistic) {
+  Widget _buildActionBar(
+    BuildContext context,
+    WidgetRef ref,
+    bool isOptimistic,
+  ) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -441,7 +455,11 @@ class PostCard extends StatelessWidget {
                 ? CupertinoColors.systemRed
                 : ShadcnColors.foreground,
             count: post.likeCount,
-            onTap: isOptimistic ? null : () {},
+            onTap: isOptimistic
+                ? null
+                : () => ref
+                      .read(postReactionControllerProvider)
+                      .toggleReaction(post),
           ),
           _actionButton(
             icon: FluentIcons.chat_24_regular,
@@ -475,7 +493,7 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailActionBar(BuildContext context) {
+  Widget _buildDetailActionBar(BuildContext context, WidgetRef ref) {
     return Transform.translate(
       offset: const Offset(-8, 0),
       child: Row(
@@ -489,7 +507,11 @@ class PostCard extends StatelessWidget {
                 ? CupertinoColors.systemRed
                 : ShadcnColors.foreground,
             count: post.likeCount,
-            onTap: () {},
+            onTap: post.extraData['optimistic'] == true
+                ? null
+                : () => ref
+                      .read(postReactionControllerProvider)
+                      .toggleReaction(post),
             large: true,
           ),
           _actionButton(

@@ -24,4 +24,14 @@ class PostApiClient extends AppCrudApiClient<Post> {
     final response = await client.post('', data: body.toJson());
     return mapToResponse(response);
   }
+
+  Future<BaseResponse<bool>> react(String postId) async {
+    final response = await client.post('/$postId/react');
+    return mapToCustomResponse<bool>(response, (json) {
+      final value = json['is_liked'];
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      return value?.toString() == 'true' || value?.toString() == '1';
+    });
+  }
 }
