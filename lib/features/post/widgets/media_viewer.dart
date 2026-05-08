@@ -6,7 +6,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_core/core/ui/feedback/app_spinner.dart';
 import 'package:flutter_core/core/utils/number_format_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';

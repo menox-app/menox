@@ -180,7 +180,7 @@ class CreatePostBody implements BaseSerializable {
   Map<String, dynamic> toJson() => _$CreatePostBodyToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class CreatePostMediaBody {
   final String mediaId;
   final int order;

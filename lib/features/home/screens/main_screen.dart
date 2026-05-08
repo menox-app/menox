@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_core/core/ui/widgets/app_bottom_bar.dart';
-import 'package:flutter_core/features/home/widgets/create_post_sheet.dart';
+import 'package:flutter_core/core/ui/layout/app_bottom_bar.dart';
+import 'package:flutter_core/features/post/widgets/create_post_sheet.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 

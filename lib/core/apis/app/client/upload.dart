@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_core/core/apis/app/client/crud.dart';
 import 'package:flutter_core/core/apis/app/interfaces/upload.dart';
+import 'package:flutter_core/core/apis/base/client/dio_factory.dart';
 import 'package:flutter_core/core/apis/base/interfaces/response.dart';
 
 class UploadApiClient extends AppCrudApiClient<Upload> {
@@ -14,6 +15,9 @@ class UploadApiClient extends AppCrudApiClient<Upload> {
       "/single",
       data: await request.toFormData(),
       queryParameters: request.params,
+      options: Options(
+        extra: {DioFactory.retryDataBuilderKey: request.toFormData},
+      ),
     );
 
     return mapToResponse(response);
@@ -26,6 +30,9 @@ class UploadApiClient extends AppCrudApiClient<Upload> {
       "/multiple",
       data: await request.toFormData(),
       queryParameters: request.params,
+      options: Options(
+        extra: {DioFactory.retryDataBuilderKey: request.toFormData},
+      ),
     );
 
     return _mapToUploadListResponse(response);

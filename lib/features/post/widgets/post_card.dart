@@ -3,12 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/core/ui/media/app_image.dart';
 import 'package:flutter_core/core/utils/date_time_utils.dart';
 import 'package:flutter_core/core/utils/number_format_utils.dart';
-import 'package:flutter_core/features/home/widgets/comment_card.dart';
-import 'package:flutter_core/features/home/widgets/create_comment_sheet.dart';
-import 'package:flutter_core/features/home/widgets/media_carousel.dart';
+import 'package:flutter_core/features/comment/widgets/comment_card.dart';
+import 'package:flutter_core/features/comment/widgets/create_comment_sheet.dart';
+import 'package:flutter_core/features/post/widgets/media_carousel.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 

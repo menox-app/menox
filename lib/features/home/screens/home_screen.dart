@@ -2,18 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/assets/app_icons.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_image.dart';
-import 'package:flutter_core/features/home/providers/post_providers.dart';
-import 'package:flutter_core/features/home/widgets/create_post_sheet.dart';
-import 'package:flutter_core/features/home/widgets/post_card.dart';
+import 'package:flutter_core/core/assets/app_icons.dart';
+import 'package:flutter_core/core/ui/controls/app_button.dart';
+import 'package:flutter_core/core/ui/controls/app_icon_button.dart';
+import 'package:flutter_core/core/ui/media/app_image.dart';
+import 'package:flutter_core/features/post/providers/post_providers.dart';
+import 'package:flutter_core/features/post/widgets/create_post_sheet.dart';
+import 'package:flutter_core/features/post/widgets/post_card.dart';
 import 'package:flutter_core/features/user/providers/user_provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
-import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
+import 'package:flutter_core/core/ui/feedback/app_error_state.dart';
+import 'package:flutter_core/core/ui/layout/app_scaffold.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class HomeScreen extends HookConsumerWidget {

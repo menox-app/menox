@@ -107,8 +107,5 @@ class CreateCommentMediaBody {
 }
 
 class ICreateCommentRequest extends BaseCreateRequest<Comment> {
-  ICreateCommentRequest({
-    required super.body,
-    super.params,
-  });
+  ICreateCommentRequest({required super.body, super.params});
 }

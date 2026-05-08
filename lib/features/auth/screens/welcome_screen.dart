@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
+import 'package:flutter_core/core/ui/controls/app_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_core/core/ui/assets/app_icons.dart';
+import 'package:flutter_core/core/assets/app_icons.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

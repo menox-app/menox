@@ -5,15 +5,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_core/core/apis/app/index.dart' show AppApi;
 import 'package:flutter_core/core/apis/app/providers.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/apis/app/interfaces/upload.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_image.dart';
-import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
-import 'package:flutter_core/features/home/providers/post_providers.dart';
+import 'package:flutter_core/core/ui/controls/app_button.dart';
+import 'package:flutter_core/core/ui/controls/app_icon_button.dart';
+import 'package:flutter_core/core/ui/media/app_image.dart';
+import 'package:flutter_core/core/ui/feedback/app_spinner.dart';
+import 'package:flutter_core/features/post/providers/post_providers.dart';
 import 'package:flutter_core/features/user/providers/user_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -187,23 +188,39 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     if (!_canPost || _isPosting) return;
 
     setState(() => _isPosting = true);
-    try {
-      final medias = await _uploadAttachments();
-      final response = await ref
-          .read(appApiProvider)
-          .posts
-          .createPost(
-            CreatePostBody(
-              content: _contentController.text.trim(),
-              visibility: 'public',
-              medias: medias,
-            ),
-          );
+    final optimisticId =
+        'optimistic-post-${DateTime.now().microsecondsSinceEpoch}';
+    var didPrependOptimisticPost = false;
+    final appApi = ref.read(appApiProvider);
+    final feedNotifier = ref.read(feedPostsProvider.notifier);
 
-      if (!mounted) return;
-      _prependPostToFeed(response.data);
-      Navigator.of(context, rootNavigator: true).pop();
+    try {
+      final optimisticPost = _optimisticPost(
+        optimisticId,
+        _localPreviewMedias(optimisticId),
+      );
+      feedNotifier.prependPost(optimisticPost);
+      didPrependOptimisticPost = true;
+
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      final medias = await _uploadAttachments(appApi);
+      final response = await appApi.posts.createPost(
+        CreatePostBody(
+          content: _contentController.text.trim(),
+          visibility: 'public',
+          medias: medias,
+        ),
+      );
+
+      feedNotifier.replacePost(optimisticId, response.data);
+      unawaited(feedNotifier.refresh());
     } catch (error) {
+      if (didPrependOptimisticPost) {
+        feedNotifier.removePost(optimisticId);
+      }
       if (!mounted) return;
       await _showSubmitError(error);
     } finally {
@@ -211,19 +228,52 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     }
   }
 
-  void _prependPostToFeed(Post post) {
-    ref.read(feedPostsProvider.notifier).prependPost(post);
-    unawaited(ref.read(feedPostsProvider.notifier).refresh());
+  Post _optimisticPost(String id, List<Media> medias) {
+    final user = ref.read(currentUserProvider);
+    return Post(
+      id: id,
+      content: _contentController.text.trim(),
+      visibility: 'public',
+      authorId: user?.id,
+      author: Author(
+        id: user?.id,
+        username: user?.username ?? '',
+        displayName: user?.displayName,
+        avatarUrl: user?.avatarUrl,
+      ),
+      medias: medias,
+      likeCount: 0,
+      commentCount: 0,
+      repostCount: 0,
+      shareCount: 0,
+      isLiked: false,
+      isFollowingAuthor: false,
+      highlightComments: const [],
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      extraData: const {'optimistic': true},
+    );
   }
 
-  Future<List<CreatePostMediaBody>> _uploadAttachments() async {
+  List<Media> _localPreviewMedias(String optimisticPostId) {
+    return _attachments.indexed.map((entry) {
+      final (index, attachment) = entry;
+      return Media(
+        id: 'optimistic-media-$index-$optimisticPostId',
+        url: attachment.file.path,
+        type: attachment.type.name,
+        postId: optimisticPostId,
+      );
+    }).toList();
+  }
+
+  Future<List<CreatePostMediaBody>> _uploadAttachments(AppApi appApi) async {
     if (_attachments.isEmpty) return const [];
 
     final files = _attachments.map((attachment) {
       return File(attachment.file.path);
     }).toList();
 
-    final appApi = ref.read(appApiProvider);
     final response = files.length == 1
         ? await appApi.upload.single(
             IUploadSingleRequest(file: files.first, folder: 'posts'),

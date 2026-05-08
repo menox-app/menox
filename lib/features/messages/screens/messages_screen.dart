@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
-import 'package:flutter_core/core/ui/widgets/safe_content_area.dart';
+import 'package:flutter_core/core/ui/feedback/app_error_state.dart';
+import 'package:flutter_core/core/ui/layout/safe_content_area.dart';
 
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({super.key});

@@ -1,11 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
+import 'package:flutter_core/core/ui/controls/app_icon_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_text_field.dart';
+import 'package:flutter_core/core/ui/controls/app_button.dart';
+import 'package:flutter_core/core/ui/controls/app_text_field.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -139,7 +140,7 @@ class LoginScreen extends HookConsumerWidget {
                           context: context,
                           builder: (context) => CupertinoAlertDialog(
                             title: const Text('Login Failed'),
-                            content: Text(error.toString()),
+                            content: Text(_loginErrorMessage(error)),
                             actions: [
                               CupertinoDialogAction(
                                 child: const Text('OK'),
@@ -198,6 +199,32 @@ class LoginScreen extends HookConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _loginErrorMessage(Object error) {
+    if (error is DioException) {
+      if (error.response?.statusCode == 401) {
+        return 'Email hoặc mật khẩu không đúng.';
+      }
+
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return 'Kết nối mất quá lâu. Vui lòng thử lại.';
+        case DioExceptionType.connectionError:
+          return 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.';
+        case DioExceptionType.badResponse:
+          return 'Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.';
+        case DioExceptionType.cancel:
+          return 'Yêu cầu đăng nhập đã bị hủy.';
+        case DioExceptionType.badCertificate:
+        case DioExceptionType.unknown:
+          break;
+      }
+    }
+
+    return 'Không thể đăng nhập. Vui lòng thử lại.';
   }
 }
 

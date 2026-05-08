@@ -1,16 +1,16 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_icon_button.dart';
-import 'package:flutter_core/features/home/providers/post_providers.dart';
-import 'package:flutter_core/core/ui/widgets/app_scaffold.dart';
-import 'package:flutter_core/features/home/widgets/comment_input_bar.dart';
-import 'package:flutter_core/features/home/widgets/comment_card.dart';
-import 'package:flutter_core/features/home/widgets/post_card.dart';
-import 'package:flutter_core/core/ui/widgets/app_error_state.dart';
+import 'package:flutter_core/core/ui/controls/app_button.dart';
+import 'package:flutter_core/core/ui/controls/app_icon_button.dart';
+import 'package:flutter_core/features/comment/providers/comment_providers.dart';
+import 'package:flutter_core/features/post/providers/post_providers.dart';
+import 'package:flutter_core/core/ui/layout/app_scaffold.dart';
+import 'package:flutter_core/features/comment/widgets/comment_input_bar.dart';
+import 'package:flutter_core/features/comment/widgets/comment_card.dart';
+import 'package:flutter_core/features/post/widgets/post_card.dart';
+import 'package:flutter_core/core/ui/feedback/app_error_state.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -100,11 +100,11 @@ class PostDetailScreen extends HookConsumerWidget {
           ],
         ),
       ),
-      child: Material(
+      child: ColoredBox(
         color: ShadcnColors.background,
-        child: Stack(
+        child: Column(
           children: [
-            Positioned.fill(
+            Expanded(
               child: CustomScrollView(
                 controller: scrollController,
                 physics: const BouncingScrollPhysics(
@@ -184,17 +184,11 @@ class PostDetailScreen extends HookConsumerWidget {
                     ],
                   ),
 
-                  // Bottom padding for input bar
-                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 ],
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: CommentInputBar(post: currentPost),
-            ),
+            CommentInputBar(post: currentPost),
           ],
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/safe_content_area.dart';
+import 'package:flutter_core/core/ui/layout/safe_content_area.dart';
 
 class ActivityScreen extends StatelessWidget {
   const ActivityScreen({super.key});

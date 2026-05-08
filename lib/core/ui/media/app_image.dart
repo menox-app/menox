@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
@@ -50,6 +52,10 @@ class AppImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = url?.trim();
+    final isLocalFile =
+        imageUrl != null &&
+        imageUrl.isNotEmpty &&
+        (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'));
 
     return _clip(
       SizedBox(
@@ -57,6 +63,18 @@ class AppImage extends StatelessWidget {
         height: height,
         child: imageUrl == null || imageUrl.isEmpty
             ? _buildError()
+            : isLocalFile
+            ? Image.file(
+                File(
+                  imageUrl.startsWith('file://')
+                      ? Uri.parse(imageUrl).toFilePath()
+                      : imageUrl,
+                ),
+                width: width,
+                height: height,
+                fit: fit,
+                errorBuilder: (_, __, ___) => _buildError(),
+              )
             : CachedNetworkImage(
                 imageUrl: imageUrl,
                 width: width,

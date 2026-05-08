@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_image.dart';
-import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_core/core/ui/media/app_image.dart';
+import 'package:flutter_core/core/ui/feedback/app_spinner.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:flutter_core/features/home/widgets/media_viewer.dart';
+import 'package:flutter_core/features/post/widgets/media_viewer.dart';
 
 /// Renders media for a post.
 class MediaCarousel extends StatefulWidget {
@@ -88,26 +88,26 @@ class _MediaCarouselState extends State<MediaCarousel> {
     return Padding(
       padding: widget.padding,
       child: GestureDetector(
-      onTap: () => MediaViewer.open(
-        context,
-        allMedias,
-        initialIndex: 0,
-        likeCount: widget.likeCount,
-        commentCount: widget.commentCount,
-        repostCount: widget.repostCount,
-        shareCount: widget.shareCount,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          width: double.infinity,
-          height: _mediaHeight,
-          child: AppImage(url: media.url, fit: BoxFit.cover),
+        onTap: () => MediaViewer.open(
+          context,
+          allMedias,
+          initialIndex: 0,
+          likeCount: widget.likeCount,
+          commentCount: widget.commentCount,
+          repostCount: widget.repostCount,
+          shareCount: widget.shareCount,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            width: double.infinity,
+            height: _mediaHeight,
+            child: AppImage(url: media.url, fit: BoxFit.cover),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildHorizontalScroll(List<Media> images, List<Media> allMedias) {
     // Card width = ~70% of available width so next card peeks
@@ -165,26 +165,26 @@ class _MediaCarouselState extends State<MediaCarousel> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Container(
-          width: double.infinity,
-          height: _mediaHeight,
-          color: ShadcnColors.secondary,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Video Error:\n${_videoError ?? ''}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: ShadcnColors.destructive,
-                  fontSize: AppFontSizes.meta,
+            width: double.infinity,
+            height: _mediaHeight,
+            color: ShadcnColors.secondary,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Video Error:\n${_videoError ?? ''}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: ShadcnColors.destructive,
+                    fontSize: AppFontSizes.meta,
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
     if (!_isVideoInitialized || _videoController == null) {
       return Padding(
@@ -192,106 +192,107 @@ class _MediaCarouselState extends State<MediaCarousel> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Container(
-          width: double.infinity,
-          height: _mediaHeight,
-          color: ShadcnColors.secondary,
-          child: const Center(child: AppSpinner()),
+            width: double.infinity,
+            height: _mediaHeight,
+            color: ShadcnColors.secondary,
+            child: const Center(child: AppSpinner()),
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
     return Padding(
       padding: widget.padding,
       child: VisibilityDetector(
         key: Key('video_${widget.medias.first.id}'),
-      onVisibilityChanged: (info) {
-        if (!mounted || _videoController == null || !_isVideoInitialized) {
-          return;
-        }
-        if (info.visibleFraction >= 0.5) {
-          if (!_videoController!.value.isPlaying) {
-            _videoController!.play();
+        onVisibilityChanged: (info) {
+          if (!mounted || _videoController == null || !_isVideoInitialized) {
+            return;
           }
-        } else {
-          if (_videoController!.value.isPlaying) {
-            _videoController!.pause();
+          if (info.visibleFraction >= 0.5) {
+            if (!_videoController!.value.isPlaying) {
+              _videoController!.play();
+            }
+          } else {
+            if (_videoController!.value.isPlaying) {
+              _videoController!.pause();
+            }
           }
-        }
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            // Open MediaViewer instead of toggling play inline
-            MediaViewer.open(
-              context,
-              widget.medias,
-              initialIndex: 0,
-              likeCount: widget.likeCount,
-              commentCount: widget.commentCount,
-              repostCount: widget.repostCount,
-              shareCount: widget.shareCount,
-            );
-          },
-          child: SizedBox(
-            width: double.infinity,
-            height: _mediaHeight,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black,
-                    child: Center(
-                      child: _videoController!.value.aspectRatio > 0
-                          ? AspectRatio(
-                              aspectRatio: _videoController!.value.aspectRatio,
-                              child: IgnorePointer(
-                                child: VideoPlayer(_videoController!),
-                              ),
-                            )
-                          : const SizedBox(),
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  bottom: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (_videoController!.value.volume == 0) {
-                          _videoController!.setVolume(1.0);
-                        } else {
-                          _videoController!.setVolume(0.0);
-                        }
-                      });
-                    },
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              // Open MediaViewer instead of toggling play inline
+              MediaViewer.open(
+                context,
+                widget.medias,
+                initialIndex: 0,
+                likeCount: widget.likeCount,
+                commentCount: widget.commentCount,
+                repostCount: widget.repostCount,
+                shareCount: widget.shareCount,
+              );
+            },
+            child: SizedBox(
+              width: double.infinity,
+              height: _mediaHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
                     child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF000000).withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _videoController!.value.volume == 0
-                            ? FluentIcons.speaker_mute_24_filled
-                            : FluentIcons.speaker_2_24_filled,
-                        color: const Color(0xFFFFFFFF),
-                        size: 16,
+                      color: Colors.black,
+                      child: Center(
+                        child: _videoController!.value.aspectRatio > 0
+                            ? AspectRatio(
+                                aspectRatio:
+                                    _videoController!.value.aspectRatio,
+                                child: IgnorePointer(
+                                  child: VideoPlayer(_videoController!),
+                                ),
+                              )
+                            : const SizedBox(),
                       ),
                     ),
                   ),
-                ),
-              ],
+
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (_videoController!.value.volume == 0) {
+                            _videoController!.setVolume(1.0);
+                          } else {
+                            _videoController!.setVolume(0.0);
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF000000).withValues(alpha: 0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _videoController!.value.volume == 0
+                              ? FluentIcons.speaker_mute_24_filled
+                              : FluentIcons.speaker_2_24_filled,
+                          color: const Color(0xFFFFFFFF),
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

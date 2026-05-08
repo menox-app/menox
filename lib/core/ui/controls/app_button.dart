@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_core/core/ui/feedback/app_spinner.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, link, destructive }
 

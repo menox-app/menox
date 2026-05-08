@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/core/ui/media/app_image.dart';
 
 class ProfileStatItem extends StatelessWidget {
   final String label;

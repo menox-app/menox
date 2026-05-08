@@ -2,11 +2,11 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_image.dart';
+import 'package:flutter_core/core/ui/media/app_image.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/utils/date_time_utils.dart';
 import 'package:flutter_core/core/utils/number_format_utils.dart';
-import 'package:flutter_core/features/home/widgets/create_comment_sheet.dart';
+import 'package:flutter_core/features/comment/widgets/create_comment_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CommentCard extends StatelessWidget {
@@ -30,9 +30,10 @@ class CommentCard extends StatelessWidget {
     final author = comment.author;
     final hasContent =
         comment.content != null && comment.content!.trim().isNotEmpty;
+    final hasMedia = comment.medias != null && comment.medias!.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.only(top: showHorizontalPadding ? 8 : 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,6 +104,18 @@ class CommentCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  if (hasMedia)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: comment.medias!
+                              .map((media) => _buildMediaPreview(media.url))
+                              .toList(),
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 6),
                   _buildCommentActionBar(context, comment),
                 ],
@@ -127,6 +140,25 @@ class CommentCard extends StatelessWidget {
       child: AppImage.avatar(
         url: author?.avatarUrl,
         size: 38,
+        backgroundColor: ShadcnColors.secondary,
+      ),
+    );
+  }
+
+  Widget _buildMediaPreview(String url) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: ShadcnColors.secondary,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ShadcnColors.border, width: 0.5),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: AppImage(
+        url: url,
+        fit: BoxFit.cover,
         backgroundColor: ShadcnColors.secondary,
       ),
     );

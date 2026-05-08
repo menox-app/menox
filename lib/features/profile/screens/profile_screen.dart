@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_core/core/ui/feedback/app_spinner.dart';
 import 'package:flutter_core/features/auth/providers/auth_provider.dart';
 import 'package:flutter_core/features/profile/widgets/profile_widgets.dart';
 import 'package:flutter_core/features/user/providers/user_provider.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
-import 'package:flutter_core/core/ui/widgets/app_button.dart';
-import 'package:flutter_core/core/ui/widgets/app_spinner.dart';
+import 'package:flutter_core/core/ui/controls/app_button.dart';
+import 'package:flutter_core/core/ui/feedback/app_spinner.dart';
 
 class AppIconButton extends StatefulWidget {
   final IconData? icon;
