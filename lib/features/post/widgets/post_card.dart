@@ -3,9 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/apis/app/interfaces/comment.dart';
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/controls/app_action_button.dart';
 import 'package:flutter_core/core/ui/media/app_image.dart';
 import 'package:flutter_core/core/utils/date_time_utils.dart';
-import 'package:flutter_core/core/utils/number_format_utils.dart';
 import 'package:flutter_core/features/comment/widgets/comment_card.dart';
 import 'package:flutter_core/features/comment/widgets/create_comment_sheet.dart';
 import 'package:flutter_core/features/post/providers/post_providers.dart';
@@ -447,21 +447,24 @@ class PostCard extends ConsumerWidget {
       child: Row(
         spacing: 6,
         children: [
-          _actionButton(
+          AppActionButton(
             icon: post.isLiked == true
                 ? FluentIcons.heart_24_filled
                 : FluentIcons.heart_24_regular,
+            activeIcon: FluentIcons.heart_24_filled,
             color: post.isLiked == true
                 ? CupertinoColors.systemRed
                 : ShadcnColors.foreground,
+            activeColor: CupertinoColors.systemRed,
             count: post.likeCount,
+            isActive: post.isLiked == true,
             onTap: isOptimistic
                 ? null
                 : () => ref
                       .read(postReactionControllerProvider)
                       .toggleReaction(post),
           ),
-          _actionButton(
+          AppActionButton(
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: post.commentCount,
@@ -476,13 +479,13 @@ class PostCard extends ConsumerWidget {
                     }
                   },
           ),
-          _actionButton(
+          AppActionButton(
             icon: FluentIcons.arrow_sync_24_regular,
             color: ShadcnColors.foreground,
             count: post.repostCount,
             onTap: isOptimistic ? null : () {},
           ),
-          _actionButton(
+          AppActionButton(
             icon: FluentIcons.send_24_regular,
             color: ShadcnColors.foreground,
             count: post.shareCount,
@@ -499,14 +502,17 @@ class PostCard extends ConsumerWidget {
       child: Row(
         spacing: 16,
         children: [
-          _actionButton(
+          AppActionButton(
             icon: post.isLiked == true
                 ? FluentIcons.heart_24_filled
                 : FluentIcons.heart_24_regular,
+            activeIcon: FluentIcons.heart_24_filled,
             color: post.isLiked == true
                 ? CupertinoColors.systemRed
                 : ShadcnColors.foreground,
+            activeColor: CupertinoColors.systemRed,
             count: post.likeCount,
+            isActive: post.isLiked == true,
             onTap: post.extraData['optimistic'] == true
                 ? null
                 : () => ref
@@ -514,21 +520,21 @@ class PostCard extends ConsumerWidget {
                       .toggleReaction(post),
             large: true,
           ),
-          _actionButton(
+          AppActionButton(
             icon: FluentIcons.chat_24_regular,
             color: ShadcnColors.foreground,
             count: post.commentCount,
             onTap: () => showCreateCommentSheet(context, post),
             large: true,
           ),
-          _actionButton(
+          AppActionButton(
             icon: FluentIcons.arrow_sync_24_regular,
             color: ShadcnColors.foreground,
             count: post.repostCount,
             onTap: () {},
             large: true,
           ),
-          _actionButton(
+          AppActionButton(
             icon: FluentIcons.send_24_regular,
             color: ShadcnColors.foreground,
             count: post.shareCount,
@@ -536,42 +542,6 @@ class PostCard extends ConsumerWidget {
             large: true,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _actionButton({
-    required IconData icon,
-    required Color color,
-    num? count,
-    required VoidCallback? onTap,
-    bool large = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdge,
-          vertical: 8,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: large ? 22 : 18, color: color),
-            if (count != null && count > 0) ...[
-              const SizedBox(width: 4),
-              Text(
-                NumberFormatUtils.compactCount(count),
-                style: TextStyle(
-                  fontSize: large ? AppFontSizes.body : AppFontSizes.caption,
-                  color: color,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
