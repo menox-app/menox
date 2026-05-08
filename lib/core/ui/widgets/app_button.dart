@@ -6,17 +6,19 @@ enum AppButtonVariant { primary, secondary, outline, ghost, link, destructive }
 
 enum AppButtonSize { xs, sm, md, lg, icon }
 
-class AppButton extends StatefulWidget {
+class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
   final bool isLoading;
   final AppButtonVariant variant;
   final AppButtonSize size;
   final IconData? icon;
+  final double? iconSize;
   final bool fullWidth;
   final double? width;
   final double? height;
   final bool disabled;
+  final AlignmentGeometry alignment;
 
   const AppButton({
     super.key,
@@ -26,158 +28,208 @@ class AppButton extends StatefulWidget {
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.md,
     this.icon,
+    this.iconSize,
     this.fullWidth = false,
     this.height,
     this.width,
     this.disabled = false,
+    this.alignment = Alignment.center,
   });
 
   @override
-  State<AppButton> createState() => _AppButtonState();
-}
-
-class _AppButtonState extends State<AppButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-      lowerBound: 0.0,
-      upperBound: 1.0,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.96,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) =>
-          Transform.scale(scale: _scaleAnimation.value, child: child),
-      child: Container(
-        height: widget.height ?? _getHeight(),
-        width: widget.width ?? (widget.fullWidth ? double.infinity : null),
-        decoration: _getDecoration(),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(50),
-            onTapDown: widget.disabled ? null : (_) => _controller.forward(),
-            onTapUp: widget.disabled ? null : (_) => _controller.reverse(),
-            onTapCancel: widget.disabled ? null : () => _controller.reverse(),
-            onTap: (widget.isLoading || widget.disabled)
-                ? null
-                : widget.onPressed,
-            splashColor: _getSplashColor(),
-            highlightColor: Colors.transparent,
-            child: Padding(padding: _getPadding(), child: _buildContent()),
-          ),
+    final button = TextButton(
+      onPressed: disabled || isLoading ? null : onPressed,
+      style: _buttonStyle(),
+      child: _buildContent(),
+    );
+
+    final sizedButton = SizedBox(
+      width: fullWidth ? double.infinity : width,
+      height: height ?? _getHeight(),
+      child: button,
+    );
+
+    if (fullWidth || width != null) return sizedButton;
+
+    return Align(
+      alignment: alignment,
+      widthFactor: 1,
+      heightFactor: 1,
+      child: sizedButton,
+    );
+  }
+
+  ButtonStyle _buttonStyle() {
+    final buttonHeight = height ?? _getHeight();
+
+    return ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(Size(0, buttonHeight)),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.standard,
+      padding: WidgetStatePropertyAll(_getPadding()),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      ),
+      backgroundColor: WidgetStateProperty.resolveWith(_resolveBackgroundColor),
+      foregroundColor: WidgetStateProperty.resolveWith(_resolveForegroundColor),
+      overlayColor: WidgetStateProperty.resolveWith(_resolveOverlayColor),
+      side: WidgetStateProperty.resolveWith(_resolveBorder),
+      elevation: const WidgetStatePropertyAll(0),
+      textStyle: WidgetStatePropertyAll(
+        TextStyle(
+          fontSize: _getFontSize(),
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+          leadingDistribution: TextLeadingDistribution.even,
+          letterSpacing: 0,
+          decoration: variant == AppButtonVariant.link
+              ? TextDecoration.underline
+              : null,
         ),
       ),
     );
   }
 
-  BoxDecoration? _getDecoration() {
-    if (widget.variant == AppButtonVariant.link) return null;
+  Color? _resolveBackgroundColor(Set<WidgetState> states) {
+    final isDisabled = states.contains(WidgetState.disabled);
 
-    final bool isDisabled = widget.disabled || widget.isLoading;
-
-    switch (widget.variant) {
+    switch (variant) {
       case AppButtonVariant.primary:
-        return BoxDecoration(
-          color: isDisabled
-              ? ShadcnColors.primary.withValues(alpha: 0.6)
-              : ShadcnColors.primary,
-          borderRadius: BorderRadius.circular(50),
-        );
+        return isDisabled
+            ? ShadcnColors.primary.withValues(alpha: 0.6)
+            : ShadcnColors.primary;
       case AppButtonVariant.secondary:
-        return BoxDecoration(
-          color: isDisabled
-              ? ShadcnColors.secondary.withValues(alpha: 0.5)
-              : ShadcnColors.secondary,
-          borderRadius: BorderRadius.circular(50),
-        );
-      case AppButtonVariant.outline:
-        return BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(50),
-          border: Border.all(
-            color: isDisabled
-                ? ShadcnColors.border.withValues(alpha: 0.5)
-                : ShadcnColors.border,
-            width: 1,
-          ),
-        );
-      case AppButtonVariant.ghost:
-        return BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(50),
-        );
+        return isDisabled
+            ? ShadcnColors.secondary.withValues(alpha: 0.5)
+            : ShadcnColors.secondary;
       case AppButtonVariant.destructive:
-        return BoxDecoration(
-          color: isDisabled
-              ? ShadcnColors.destructive.withValues(alpha: 0.5)
-              : ShadcnColors.destructive,
-          borderRadius: BorderRadius.circular(50),
-        );
-      default:
-        return null;
+        return isDisabled
+            ? ShadcnColors.destructive.withValues(alpha: 0.5)
+            : ShadcnColors.destructive;
+      case AppButtonVariant.outline:
+      case AppButtonVariant.ghost:
+      case AppButtonVariant.link:
+        return Colors.transparent;
+    }
+  }
+
+  Color _resolveForegroundColor(Set<WidgetState> states) {
+    final baseColor = _getTextColor();
+    if (states.contains(WidgetState.disabled)) {
+      return baseColor.withValues(alpha: 0.65);
+    }
+    return baseColor;
+  }
+
+  Color? _resolveOverlayColor(Set<WidgetState> states) {
+    if (states.contains(WidgetState.disabled)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed)) {
+      return _getTextColor().withValues(alpha: 0.12);
+    }
+    if (states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.focused)) {
+      return _getTextColor().withValues(alpha: 0.08);
+    }
+    return Colors.transparent;
+  }
+
+  BorderSide? _resolveBorder(Set<WidgetState> states) {
+    if (variant != AppButtonVariant.outline) return null;
+
+    return BorderSide(
+      color: states.contains(WidgetState.disabled)
+          ? ShadcnColors.border.withValues(alpha: 0.5)
+          : ShadcnColors.border,
+      width: 1,
+    );
+  }
+
+  double _getFontSize() {
+    switch (size) {
+      case AppButtonSize.xs:
+        return AppFontSizes.meta;
+      case AppButtonSize.sm:
+        return AppFontSizes.bodySmall;
+      case AppButtonSize.md:
+      case AppButtonSize.icon:
+        return AppFontSizes.body;
+      case AppButtonSize.lg:
+        return AppFontSizes.input;
+    }
+  }
+
+  double _getIconSize() {
+    if (iconSize != null) return iconSize!;
+
+    switch (size) {
+      case AppButtonSize.xs:
+        return 16;
+      case AppButtonSize.sm:
+        return 18;
+      case AppButtonSize.md:
+        return 20;
+      case AppButtonSize.lg:
+        return 22;
+      case AppButtonSize.icon:
+        return 20;
     }
   }
 
   double _getHeight() {
-    switch (widget.size) {
+    switch (size) {
       case AppButtonSize.xs:
         return 32;
       case AppButtonSize.sm:
         return 36;
       case AppButtonSize.md:
-        return 44; // Mobile Standard
+        return 44;
       case AppButtonSize.lg:
-        return 52; // CTA Standard
+        return 52;
       case AppButtonSize.icon:
         return 44;
     }
   }
 
-  Color _getSplashColor() {
-    final textColor = _getTextColor();
-    return textColor.withValues(alpha: 0.1);
-  }
-
   EdgeInsets _getPadding() {
-    if (widget.size == AppButtonSize.icon) return EdgeInsets.zero;
+    if (size == AppButtonSize.icon) return EdgeInsets.zero;
 
-    switch (widget.size) {
+    if (variant == AppButtonVariant.ghost || variant == AppButtonVariant.link) {
+      switch (size) {
+        case AppButtonSize.xs:
+          return const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge);
+        case AppButtonSize.sm:
+          return const EdgeInsets.symmetric(horizontal: 10);
+        case AppButtonSize.md:
+          return const EdgeInsets.symmetric(horizontal: 12);
+        case AppButtonSize.lg:
+          return const EdgeInsets.symmetric(horizontal: 16);
+        case AppButtonSize.icon:
+          return EdgeInsets.zero;
+      }
+    }
+
+    switch (size) {
       case AppButtonSize.xs:
         return const EdgeInsets.symmetric(horizontal: 12);
       case AppButtonSize.sm:
-        return const EdgeInsets.symmetric(horizontal: 16);
+        return const EdgeInsets.symmetric(horizontal: 14);
       case AppButtonSize.md:
-        return const EdgeInsets.symmetric(horizontal: 20);
+        return const EdgeInsets.symmetric(horizontal: 18);
       case AppButtonSize.lg:
-        return const EdgeInsets.symmetric(horizontal: 24);
-      default:
-        return const EdgeInsets.symmetric(horizontal: 20);
+        return const EdgeInsets.symmetric(horizontal: 22);
+      case AppButtonSize.icon:
+        return EdgeInsets.zero;
     }
   }
 
+  double _getIconGap() {
+    if (size == AppButtonSize.xs) return 4;
+    return 6;
+  }
+
   Color _getTextColor() {
-    switch (widget.variant) {
+    switch (variant) {
       case AppButtonVariant.primary:
         return ShadcnColors.primaryForeground;
       case AppButtonVariant.secondary:
@@ -194,53 +246,34 @@ class _AppButtonState extends State<AppButton>
   Widget _buildContent() {
     final textColor = _getTextColor();
 
-    if (widget.isLoading) {
-      return Center(child: AppSpinner(size: 20, color: textColor));
+    if (isLoading) {
+      return AppSpinner(size: _getIconSize(), color: textColor);
     }
 
-    double fontSize;
-    double iconSize;
-
-    switch (widget.size) {
-      case AppButtonSize.xs:
-        fontSize = AppFontSizes.meta;
-        iconSize = 14;
-        break;
-      case AppButtonSize.sm:
-        fontSize = AppFontSizes.bodySmall;
-        iconSize = 16;
-        break;
-      case AppButtonSize.md:
-        fontSize = AppFontSizes.body;
-        iconSize = 18;
-        break;
-      case AppButtonSize.lg:
-        fontSize = AppFontSizes.input;
-        iconSize = 20;
-        break;
-      case AppButtonSize.icon:
-        fontSize = AppFontSizes.body;
-        iconSize = 20;
-        break;
-    }
+    final iconSize = _getIconSize();
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (widget.icon != null) ...[
-          Icon(widget.icon, size: iconSize, color: textColor),
-          if (widget.size != AppButtonSize.icon) const SizedBox(width: 8),
+        if (icon != null) ...[
+          SizedBox.square(
+            dimension: iconSize,
+            child: Icon(icon, size: iconSize),
+          ),
+          if (size != AppButtonSize.icon) SizedBox(width: _getIconGap()),
         ],
-        if (widget.size != AppButtonSize.icon)
+        if (size != AppButtonSize.icon)
           Text(
-            widget.text,
+            text,
             style: TextStyle(
-              color: textColor,
-              fontSize: fontSize,
+              fontSize: _getFontSize(),
               fontWeight: FontWeight.w600,
-              letterSpacing: -0.2,
-              decoration: widget.variant == AppButtonVariant.link
+              height: 1.2,
+              leadingDistribution: TextLeadingDistribution.even,
+              letterSpacing: 0,
+              decoration: variant == AppButtonVariant.link
                   ? TextDecoration.underline
                   : null,
             ),

@@ -14,6 +14,12 @@ import 'package:shimmer/shimmer.dart';
 
 /// Threads-style post card:
 class PostCard extends StatelessWidget {
+  static const double _horizontalInset = AppSpacing.screenEdge;
+  static const double _avatarSize = 38;
+  static const double _avatarGap = 12;
+  static const double _contentInset =
+      _horizontalInset + _avatarSize + _avatarGap;
+
   final Post post;
   final bool isDetail;
 
@@ -52,7 +58,12 @@ class PostCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        _horizontalInset,
+                        14,
+                        _horizontalInset,
+                        0,
+                      ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -83,15 +94,20 @@ class PostCard extends StatelessWidget {
                         repostCount: post.repostCount,
                         shareCount: post.shareCount,
                         padding: const EdgeInsets.only(
-                          left: 66,
-                          right: 16,
-                        ), // 16 (pad) + 38 (avatar) + 12 (gap) = 66
+                          left: _contentInset,
+                          right: _horizontalInset,
+                        ),
                       ),
                     ],
 
                     const SizedBox(height: 6),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(66, 0, 16, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        _contentInset,
+                        0,
+                        _horizontalInset,
+                        0,
+                      ),
                       child: _buildActionBar(context),
                     ),
 
@@ -125,7 +141,7 @@ class PostCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: _horizontalInset),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -213,7 +229,7 @@ class PostCard extends StatelessWidget {
           if (hasContent) ...[
             const SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: _horizontalInset),
               child: Text(
                 post.content!,
                 style: const TextStyle(
@@ -233,18 +249,21 @@ class PostCard extends StatelessWidget {
               commentCount: post.commentCount,
               repostCount: post.repostCount,
               shareCount: post.shareCount,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: _horizontalInset),
             ),
           ],
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: _horizontalInset),
             child: _buildDetailActionBar(context),
           ),
           const SizedBox(height: 12),
           Container(height: 0.5, color: ShadcnColors.border),
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(
+              horizontal: _horizontalInset,
+              vertical: 14,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -306,7 +325,12 @@ class PostCard extends StatelessWidget {
 
   Widget _buildHighlightComment(Comment comment, {required bool isLast}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, isLast ? 12 : 8),
+      padding: EdgeInsets.fromLTRB(
+        _horizontalInset,
+        8,
+        _horizontalInset,
+        isLast ? 12 : 8,
+      ),
       child: CommentCard(
         post: post,
         comment: comment,
@@ -495,7 +519,10 @@ class PostCard extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenEdge,
+          vertical: 8,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -526,7 +553,7 @@ class _ThreadLinePainter extends CustomPainter {
   _ThreadLinePainter({
     required this.color,
     this.startFromAvatar = false,
-    this.paddingLeft = 16.0,
+    this.paddingLeft = 8.0,
   });
 
   @override
@@ -562,7 +589,12 @@ class PostCardSkeleton extends StatelessWidget {
         baseColor: ShadcnColors.mutedForeground.withValues(alpha: 0.1),
         highlightColor: ShadcnColors.primary.withValues(alpha: 0.1),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenEdge,
+            14,
+            AppSpacing.screenEdge,
+            14,
+          ),
           child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

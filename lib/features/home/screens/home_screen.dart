@@ -54,6 +54,7 @@ class HomeScreen extends HookConsumerWidget {
       controller: scrollController,
       navigationBar: CupertinoNavigationBar(
         automaticallyImplyLeading: false,
+        padding: AppSpacing.navigationBarPadding,
         border: null,
         backgroundColor: ShadcnColors.background,
         leading: AppIconButton(
@@ -81,7 +82,10 @@ class HomeScreen extends HookConsumerWidget {
             minimumSize: Size.zero,
             onPressed: () => showCreatePostSheet(context),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenEdge,
+                vertical: 16,
+              ),
               child: Row(
                 spacing: 8,
                 children: [

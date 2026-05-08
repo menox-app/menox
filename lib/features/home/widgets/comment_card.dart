@@ -10,6 +10,8 @@ import 'package:flutter_core/features/home/widgets/create_comment_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 
 class CommentCard extends StatelessWidget {
+  static const double _horizontalInset = AppSpacing.screenEdge;
+
   final Post post;
   final Comment comment;
   final bool isLast;
@@ -34,7 +36,7 @@ class CommentCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showHorizontalPadding) const SizedBox(width: 16),
+          if (showHorizontalPadding) const SizedBox(width: _horizontalInset),
           SizedBox(
             width: 38,
             child: Stack(
@@ -55,7 +57,10 @@ class CommentCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(top: 2, right: showHorizontalPadding ? 16 : 0),
+              padding: EdgeInsets.only(
+                top: 2,
+                right: showHorizontalPadding ? _horizontalInset : 0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -160,7 +165,10 @@ class CommentCard extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenEdge,
+          vertical: 8,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -218,7 +226,7 @@ class CommentCardSkeleton extends StatelessWidget {
         baseColor: ShadcnColors.mutedForeground.withValues(alpha: 0.1),
         highlightColor: ShadcnColors.primary.withValues(alpha: 0.1),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.all(AppSpacing.screenEdge),
           child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

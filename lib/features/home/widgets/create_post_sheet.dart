@@ -189,13 +189,16 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     setState(() => _isPosting = true);
     try {
       final medias = await _uploadAttachments();
-      final response = await ref.read(appApiProvider).posts.createPost(
-        CreatePostBody(
-          content: _contentController.text.trim(),
-          visibility: 'public',
-          medias: medias,
-        ),
-      );
+      final response = await ref
+          .read(appApiProvider)
+          .posts
+          .createPost(
+            CreatePostBody(
+              content: _contentController.text.trim(),
+              visibility: 'public',
+              medias: medias,
+            ),
+          );
 
       if (!mounted) return;
       _prependPostToFeed(response.data);
@@ -407,7 +410,12 @@ class _ComposerBody extends HookConsumerWidget {
         : 'memox_user';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 22, 16, 28),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenEdge,
+        22,
+        AppSpacing.screenEdge,
+        28,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

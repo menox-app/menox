@@ -20,7 +20,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
-Future<void> showCreateCommentSheet(BuildContext context, Post post, {Comment? parentComment}) {
+Future<void> showCreateCommentSheet(
+  BuildContext context,
+  Post post, {
+  Comment? parentComment,
+}) {
   return Navigator.of(context, rootNavigator: true).push(
     CupertinoModalSheetRoute<void>(
       swipeDismissible: true,
@@ -31,7 +35,8 @@ Future<void> showCreateCommentSheet(BuildContext context, Post post, {Comment? p
           child: child,
         );
       },
-      builder: (context) => CreateCommentSheet(post: post, parentComment: parentComment),
+      builder: (context) =>
+          CreateCommentSheet(post: post, parentComment: parentComment),
     ),
   );
 }
@@ -150,14 +155,16 @@ class _CreateCommentSheetState extends ConsumerState<CreateCommentSheet> {
     setState(() => _isPosting = true);
     try {
       final medias = await _uploadAttachments();
-      await ref.read(commentActionProvider.notifier).createComment(
-        CreateCommentBody(
-          postId: widget.post.id,
-          content: _contentController.text.trim(),
-          parentId: widget.parentComment?.id,
-          medias: medias,
-        ),
-      );
+      await ref
+          .read(commentActionProvider.notifier)
+          .createComment(
+            CreateCommentBody(
+              postId: widget.post.id,
+              content: _contentController.text.trim(),
+              parentId: widget.parentComment?.id,
+              medias: medias,
+            ),
+          );
 
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
@@ -340,15 +347,20 @@ class _ComposerBody extends HookConsumerWidget {
         : 'memox_user';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 22, 16, 28),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenEdge,
+        22,
+        AppSpacing.screenEdge,
+        28,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Original Post / Parent Comment Context
           _OriginalPostContext(post: post, comment: parentComment),
-          
+
           const SizedBox(height: 12),
-          
+
           // Reply Row
           IntrinsicHeight(
             child: Row(
@@ -403,14 +415,18 @@ class _ComposerBody extends HookConsumerWidget {
                           height: 1.35,
                         ),
                         decoration: InputDecoration(
-                          hintText: "Reply to ${parentComment?.author?.username ?? post.author?.username}...",
+                          hintText:
+                              "Reply to ${parentComment?.author?.username ?? post.author?.username}...",
                           hintStyle: const TextStyle(
                             color: ShadcnColors.mutedForeground,
                             fontSize: AppFontSizes.body,
                           ),
                           border: InputBorder.none,
                           isCollapsed: true,
-                          contentPadding: const EdgeInsets.only(top: 6, bottom: 10),
+                          contentPadding: const EdgeInsets.only(
+                            top: 6,
+                            bottom: 10,
+                          ),
                         ),
                       ),
                       if (attachments.isNotEmpty) ...[
@@ -683,12 +699,13 @@ class _ComposerBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenEdge,
+        vertical: 12,
+      ),
       decoration: const BoxDecoration(
         color: ShadcnColors.background,
-        border: Border(
-          top: BorderSide(color: ShadcnColors.border, width: 0.5),
-        ),
+        border: Border(top: BorderSide(color: ShadcnColors.border, width: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

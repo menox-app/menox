@@ -34,7 +34,12 @@ class ProfileScreen extends HookConsumerWidget {
 
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenEdge,
+                      24,
+                      AppSpacing.screenEdge,
+                      24,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_core/core/theme/app_theme.dart';
+import 'package:flutter_core/core/ui/widgets/safe_content_area.dart';
 
 class ActivityScreen extends StatelessWidget {
   const ActivityScreen({super.key});
@@ -8,11 +9,14 @@ class ActivityScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
+        padding: AppSpacing.navigationBarPadding,
         middle: Text('Activity'),
         border: null,
         backgroundColor: ShadcnColors.background,
       ),
-      child: SafeArea(child: Center(child: Text('Activity Page Placeholder'))),
+      child: SafeContentArea(
+        child: Center(child: Text('Activity Page Placeholder')),
+      ),
     );
   }
 }

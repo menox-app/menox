@@ -5,6 +5,7 @@ import 'package:flutter_core/features/auth/screens/welcome_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_core/core/theme/app_theme.dart';
 import 'package:flutter_core/features/messages/screens/messages_screen.dart';
 import 'package:flutter_core/features/activity/screens/activity_screen.dart';
 import 'package:flutter_core/features/profile/screens/profile_screen.dart';
@@ -54,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     errorBuilder: (context, state) => AppScaffold(
       navigationBar: const CupertinoNavigationBar(
+        padding: AppSpacing.navigationBarPadding,
         middle: Text('Not Found'),
         border: null,
       ),

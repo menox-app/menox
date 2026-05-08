@@ -34,6 +34,19 @@ class AppFontSizes {
   static const double display = 30;
 }
 
+class AppSpacing {
+  static const double screenEdge = 8;
+
+  static const EdgeInsetsDirectional navigationBarPadding =
+      EdgeInsetsDirectional.only(start: screenEdge, end: screenEdge);
+
+  static const EdgeInsets contentHorizontal = EdgeInsets.symmetric(
+    horizontal: screenEdge,
+  );
+
+  static const EdgeInsets contentPadding = EdgeInsets.all(screenEdge);
+}
+
 class AppTheme {
   static CupertinoThemeData get cupertinoTheme {
     return const CupertinoThemeData(

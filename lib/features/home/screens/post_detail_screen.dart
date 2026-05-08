@@ -52,14 +52,18 @@ class PostDetailScreen extends HookConsumerWidget {
 
     return AppScaffold(
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: ShadcnColors.background.withValues(alpha: 0.9),
+        padding: AppSpacing.navigationBarPadding,
+        backgroundColor: ShadcnColors.background,
         border: const Border(
           bottom: BorderSide(color: ShadcnColors.border, width: 0.5),
         ),
-        leading: AppIconButton(
-          icon: FluentIcons.ios_arrow_ltr_24_filled,
-          sizeOverride: 28,
+        leading: AppButton(
+          icon: FluentIcons.chevron_left_24_filled,
           variant: AppButtonVariant.ghost,
+          text: "Back",
+          size: AppButtonSize.xs,
+          iconSize: 18,
+          alignment: Alignment.centerLeft,
           onPressed: () => Navigator.of(context).pop(),
         ),
         middle: Column(
@@ -88,13 +92,8 @@ class PostDetailScreen extends HookConsumerWidget {
           children: [
             AppIconButton(
               icon: FluentIcons.alert_24_regular,
-              sizeOverride: 28,
-              variant: AppButtonVariant.ghost,
-              onPressed: () {},
-            ),
-            AppIconButton(
-              icon: FluentIcons.more_horizontal_24_regular,
-              sizeOverride: 28,
+              size: AppButtonSize.xs,
+              iconSize: 22,
               variant: AppButtonVariant.ghost,
               onPressed: () {},
             ),
@@ -113,7 +112,9 @@ class PostDetailScreen extends HookConsumerWidget {
                 ),
                 slivers: [
                   // Post Detail
-                  SliverToBoxAdapter(child: PostCard(post: currentPost, isDetail: true)),
+                  SliverToBoxAdapter(
+                    child: PostCard(post: currentPost, isDetail: true),
+                  ),
 
                   // Pull to refresh
                   CupertinoSliverRefreshControl(
@@ -144,12 +145,15 @@ class PostDetailScreen extends HookConsumerWidget {
                           )
                         else
                           SliverList(
-                            delegate: SliverChildBuilderDelegate((context, index) {
-                                return CommentCard(
-                                  post: currentPost,
-                                  comment: comments[index],
-                                  isLast: index == comments.length - 1,
-                                );
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              return CommentCard(
+                                post: currentPost,
+                                comment: comments[index],
+                                isLast: index == comments.length - 1,
+                              );
                             }, childCount: comments.length),
                           ),
                         if (commentsState.isFetchingNextPage)
@@ -179,7 +183,7 @@ class PostDetailScreen extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                  
+
                   // Bottom padding for input bar
                   const SliverToBoxAdapter(child: SizedBox(height: 120)),
                 ],

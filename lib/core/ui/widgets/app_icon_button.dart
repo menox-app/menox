@@ -11,6 +11,7 @@ class AppIconButton extends StatefulWidget {
   final AppButtonSize size;
   final bool isLoading;
   final double? sizeOverride;
+  final double? iconSize;
 
   const AppIconButton({
     super.key,
@@ -21,6 +22,7 @@ class AppIconButton extends StatefulWidget {
     this.size = AppButtonSize.md,
     this.isLoading = false,
     this.sizeOverride,
+    this.iconSize,
   }) : assert(
          icon != null || child != null,
          'Either icon or child must be provided',
@@ -158,29 +160,28 @@ class _AppIconButtonState extends State<AppIconButton>
     final textColor = _getTextColor();
 
     if (widget.isLoading) {
-      return AppSpinner(size: 20, color: textColor);
+      return AppSpinner(size: widget.iconSize ?? 20, color: textColor);
     }
 
     if (widget.child != null) return widget.child!;
 
-    double iconSize;
+    return Icon(widget.icon, size: _getIconSize(), color: textColor);
+  }
+
+  double _getIconSize() {
+    if (widget.iconSize != null) return widget.iconSize!;
+
     switch (widget.size) {
       case AppButtonSize.xs:
-        iconSize = 16;
-        break;
+        return 16;
       case AppButtonSize.sm:
-        iconSize = 18;
-        break;
+        return 18;
       case AppButtonSize.md:
-        iconSize = 20;
-        break;
+        return 20;
       case AppButtonSize.lg:
-        iconSize = 24;
-        break;
+        return 24;
       default:
-        iconSize = 20;
+        return 20;
     }
-
-    return Icon(widget.icon, size: iconSize, color: textColor);
   }
 }

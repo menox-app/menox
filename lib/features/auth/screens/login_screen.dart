@@ -68,6 +68,7 @@ class LoginScreen extends HookConsumerWidget {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         automaticallyImplyLeading: false,
+        padding: AppSpacing.navigationBarPadding,
         border: null,
         leading: AppIconButton(
           size: AppButtonSize.sm,

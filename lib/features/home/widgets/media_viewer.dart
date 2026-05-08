@@ -489,7 +489,7 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
                 children: [
                   // Action Row (Volume)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: AppSpacing.contentHorizontal,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -526,7 +526,7 @@ class _VideoViewerPageState extends State<_VideoViewerPage> {
 
                   // Time Duration Label (shown when scrubbing or controls visible)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: AppSpacing.contentHorizontal,
                     child: Row(
                       children: [
                         Text(

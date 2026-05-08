@@ -32,7 +32,7 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _picker = ImagePicker();
-  
+
   XFile? _selectedMedia;
   bool _isPosting = false;
 
@@ -49,7 +49,8 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
     super.dispose();
   }
 
-  bool get _canPost => _controller.text.trim().isNotEmpty || _selectedMedia != null;
+  bool get _canPost =>
+      _controller.text.trim().isNotEmpty || _selectedMedia != null;
 
   Future<void> _pickMedia() async {
     HapticFeedback.selectionClick();
@@ -65,7 +66,7 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
     setState(() => _isPosting = true);
     try {
       List<CreateCommentMediaBody>? medias;
-      
+
       if (_selectedMedia != null) {
         final file = File(_selectedMedia!.path);
         final appApi = ref.read(appApiProvider);
@@ -78,14 +79,16 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
         }
       }
 
-      await ref.read(commentActionProvider.notifier).createComment(
-        CreateCommentBody(
-          postId: widget.post.id,
-          content: _controller.text.trim(),
-          parentId: widget.parentComment?.id,
-          medias: medias,
-        ),
-      );
+      await ref
+          .read(commentActionProvider.notifier)
+          .createComment(
+            CreateCommentBody(
+              postId: widget.post.id,
+              content: _controller.text.trim(),
+              parentId: widget.parentComment?.id,
+              medias: medias,
+            ),
+          );
 
       _controller.clear();
       setState(() => _selectedMedia = null);
@@ -115,7 +118,7 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: ShadcnColors.background.withValues(alpha: 0.95),
@@ -123,7 +126,12 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
           top: BorderSide(color: ShadcnColors.border, width: 0.5),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + (bottomInset > 0 ? 0 : MediaQuery.of(context).padding.bottom)),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenEdge,
+        12,
+        AppSpacing.screenEdge,
+        12 + (bottomInset > 0 ? 0 : MediaQuery.of(context).padding.bottom),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -152,7 +160,10 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: ShadcnColors.border, width: 0.5),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   child: TextField(
                     controller: _controller,
                     focusNode: _focusNode,
@@ -163,7 +174,8 @@ class _CommentInputBarState extends ConsumerState<CommentInputBar> {
                       fontSize: AppFontSizes.bodySmall,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Reply to ${widget.post.author?.username ?? 'thread'}...',
+                      hintText:
+                          'Reply to ${widget.post.author?.username ?? 'thread'}...',
                       hintStyle: const TextStyle(
                         color: ShadcnColors.mutedForeground,
                         fontSize: AppFontSizes.bodySmall,
