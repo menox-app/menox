@@ -1,8 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter_core/core/apis/app/interfaces/post.dart';
 import 'package:flutter_core/core/apis/app/providers.dart';
 import 'package:flutter_core/core/apis/base/interfaces/request.dart';
+import 'package:flutter_core/core/state/debounced_bool_action.dart';
 import 'package:flutter_core/core/state/infinite_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -20,67 +20,32 @@ final postReactionControllerProvider = Provider<PostReactionController>((ref) {
 
 class PostReactionController {
   final Ref _ref;
-  final Map<String, _PendingReactionJob> _jobs = {};
+  late final DebouncedBoolActionController<String> _controller;
 
-  PostReactionController(this._ref);
+  PostReactionController(this._ref) {
+    _controller = DebouncedBoolActionController<String>(
+      debounce: _reactionDebounce,
+      apply: _applyReaction,
+      perform: _performReaction,
+      onSettled: (postId) => _cacheSeed.remove(postId),
+    );
+  }
 
   void toggleReaction(Post post) {
-    final nextIsLiked = !(post.isLiked ?? false);
-    final job =
-        _jobs[post.id] ??
-        _PendingReactionJob(confirmedIsLiked: post.isLiked ?? false);
-
-    job.desiredIsLiked = nextIsLiked;
-    job.timer?.cancel();
-    _jobs[post.id] = job;
-
-    _applyReaction(post.id, nextIsLiked, fallbackPost: post);
-    job.timer = Timer(_reactionDebounce, () => _flush(post.id));
+    _cacheSeed[post.id] = post;
+    _controller.toggle(post.id, currentValue: post.isLiked ?? false);
   }
 
-  void dispose() {
-    for (final job in _jobs.values) {
-      job.timer?.cancel();
-    }
-    _jobs.clear();
+  final Map<String, Post> _cacheSeed = {};
+
+  void dispose() => _controller.dispose();
+
+  Future<bool> _performReaction(String postId) async {
+    final response = await _ref.read(appApiProvider).posts.react(postId);
+    return response.data;
   }
 
-  Future<void> _flush(String postId) async {
-    final job = _jobs[postId];
-    if (job == null || job.inFlight) return;
-
-    if (job.desiredIsLiked == job.confirmedIsLiked) {
-      job.timer = null;
-      _jobs.remove(postId);
-      return;
-    }
-
-    job.timer = null;
-    job.inFlight = true;
-
-    try {
-      final response = await _ref.read(appApiProvider).posts.react(postId);
-      final serverIsLiked = response.data;
-      job.confirmedIsLiked = serverIsLiked;
-      _applyReaction(postId, serverIsLiked);
-    } catch (_) {
-      job.desiredIsLiked = job.confirmedIsLiked;
-      _applyReaction(postId, job.confirmedIsLiked);
-    } finally {
-      job.inFlight = false;
-      final current = _jobs[postId];
-      if (current != null) {
-        if (current.desiredIsLiked != current.confirmedIsLiked) {
-          current.timer?.cancel();
-          current.timer = Timer(_reactionDebounce, () => _flush(postId));
-        } else if (current.timer == null) {
-          _jobs.remove(postId);
-        }
-      }
-    }
-  }
-
-  void _applyReaction(String postId, bool isLiked, {Post? fallbackPost}) {
+  void _applyReaction(String postId, bool isLiked) {
     final feedState = _ref.read(feedPostsProvider).valueOrNull;
     if (feedState != null) {
       final existing = feedState.items.any((post) => post.id == postId);
@@ -102,9 +67,14 @@ class PostReactionController {
         postDetailNotifier.updatePost(
           _postWithReaction(postDetail.value, isLiked),
         );
-      } else if (fallbackPost != null) {
+      } else if (_cacheSeed[postId] case final fallbackPost?) {
         postDetailNotifier.updatePost(_postWithReaction(fallbackPost, isLiked));
       }
+    }
+
+    final seeded = _cacheSeed[postId];
+    if (seeded != null) {
+      _cacheSeed[postId] = _postWithReaction(seeded, isLiked);
     }
   }
 
@@ -120,17 +90,6 @@ class PostReactionController {
 
     return post.copyWith(isLiked: isLiked, likeCount: nextCount);
   }
-}
-
-class _PendingReactionJob {
-  bool confirmedIsLiked;
-  bool desiredIsLiked;
-  bool inFlight;
-  Timer? timer;
-
-  _PendingReactionJob({required this.confirmedIsLiked})
-    : desiredIsLiked = confirmedIsLiked,
-      inFlight = false;
 }
 
 @riverpod
